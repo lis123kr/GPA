@@ -7,9 +7,9 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from time import time
 import rc_rc
 import pandas as pd
-import time
 import Excel
 import logging
 
@@ -53,32 +53,32 @@ class Ui_Main_frame(object):
         self.groupBox.setFont(font)
         self.groupBox.setFlat(False)
         self.groupBox.setObjectName("groupBox")
-        self.listWidget_2 = QtWidgets.QListWidget(self.groupBox)
-        self.listWidget_2.setGeometry(QtCore.QRect(20, 70, 441, 431))
+        self.sheetlist_Widget = QtWidgets.QListWidget(self.groupBox)
+        self.sheetlist_Widget.setGeometry(QtCore.QRect(20, 70, 441, 431))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.listWidget_2.sizePolicy().hasHeightForWidth())
-        self.listWidget_2.setSizePolicy(sizePolicy)
-        self.listWidget_2.setMinimumSize(QtCore.QSize(0, 0))
-        self.listWidget_2.setMaximumSize(QtCore.QSize(16777215, 16777215))
-        self.listWidget_2.setFrameShape(QtWidgets.QFrame.WinPanel)
-        self.listWidget_2.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.listWidget_2.setLineWidth(2)
-        self.listWidget_2.setAlternatingRowColors(True)
-        self.listWidget_2.setFlow(QtWidgets.QListView.TopToBottom)
-        self.listWidget_2.setObjectName("listWidget_2")
+        sizePolicy.setHeightForWidth(self.sheetlist_Widget.sizePolicy().hasHeightForWidth())
+        self.sheetlist_Widget.setSizePolicy(sizePolicy)
+        self.sheetlist_Widget.setMinimumSize(QtCore.QSize(0, 0))
+        self.sheetlist_Widget.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.sheetlist_Widget.setFrameShape(QtWidgets.QFrame.WinPanel)
+        self.sheetlist_Widget.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.sheetlist_Widget.setLineWidth(2)
+        self.sheetlist_Widget.setAlternatingRowColors(True)
+        self.sheetlist_Widget.setFlow(QtWidgets.QListView.TopToBottom)
+        self.sheetlist_Widget.setObjectName("sheetlist_Widget")
 
-        self.listWidget_2.itemClicked.connect(self.on_change)
+        self.sheetlist_Widget.itemClicked.connect(self.on_change)
 
         item = QtWidgets.QListWidgetItem()
         item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
         item.setCheckState(QtCore.Qt.Checked)
-        self.listWidget_2.addItem(item)
+        self.sheetlist_Widget.addItem(item)
         item = QtWidgets.QListWidgetItem()
         item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
         item.setCheckState(QtCore.Qt.Checked)
-        self.listWidget_2.addItem(item)
+        self.sheetlist_Widget.addItem(item)
         self.file_name = QtWidgets.QLabel(self.groupBox)
         self.file_name.setGeometry(QtCore.QRect(20, 40, 191, 31))
         font = QtGui.QFont()
@@ -246,26 +246,27 @@ class Ui_Main_frame(object):
         self.groupBox.raise_()
         self.groupBox_3.raise_()
 
+        self.xls = None
         self.retranslateUi(Main_frame)
-        self.listWidget_2.setCurrentRow(-1)
+        self.sheetlist_Widget.setCurrentRow(-1)
         self.Btn_Box.accepted.connect(Main_frame.accept)
         self.Btn_Box.rejected.connect(Main_frame.reject)
         QtCore.QMetaObject.connectSlotsByName(Main_frame)
 
-        self.xls = None
+        
 
     def retranslateUi(self, Main_frame):
         _translate = QtCore.QCoreApplication.translate
         Main_frame.setWindowTitle(_translate("Main_frame", "Analyzing Sequence"))
         self.groupBox.setTitle(_translate("Main_frame", "입력 데이터"))
-        self.listWidget_2.setSortingEnabled(False)
-        __sortingEnabled = self.listWidget_2.isSortingEnabled()
-        self.listWidget_2.setSortingEnabled(False)
-        item = self.listWidget_2.item(0)
+        self.sheetlist_Widget.setSortingEnabled(False)
+        __sortingEnabled = self.sheetlist_Widget.isSortingEnabled()
+        self.sheetlist_Widget.setSortingEnabled(False)
+        item = self.sheetlist_Widget.item(0)
         item.setText(_translate("Main_frame", "sheet1"))
-        item = self.listWidget_2.item(1)
+        item = self.sheetlist_Widget.item(1)
         item.setText(_translate("Main_frame", "sheet2"))
-        self.listWidget_2.setSortingEnabled(__sortingEnabled)
+        self.sheetlist_Widget.setSortingEnabled(__sortingEnabled)
         self.file_name.setText(_translate("Main_frame", "sample.xlsx"))
         self.groupBox_2.setTitle(_translate("Main_frame", "Column 명 설정"))
         self.label.setText(_translate("Main_frame", "Duma Seqeunce"))
@@ -295,52 +296,46 @@ class Ui_Main_frame(object):
         self.label_13.setText(_translate("Main_frame", "ORF"))
         self.label_14.setText(_translate("Main_frame", "NCR"))
 
-
     def getfile(self):
+        # get full path of selected file
+        # filename = (filepath, filetype)
         from os import getenv
-        # get full path about selected file
         filename = QtWidgets.QFileDialog.getOpenFileName(None, 'Open File', 
-            getenv('HOME'), "Excel files (*.xlsx)")
-        if filename[0] != '':
-            # extract only file name from full path
-            name_label = filename[0].split('/')[-1]
-            self.file_name.setText(QtCore.QCoreApplication.translate("Main_frame", name_label))
-            item_num = 0
-            
-            filename = filename[0]
-            self.filename_ = name_label
-            self.sheets = list()
+            getenv('HOME'), "Excel files (*.xlsx)")[0]
 
-            if filename is not None:
-                start_time = time.time()
-                xls = pd.ExcelFile(filename)
-                self.listWidget_2.setSortingEnabled(False)
-                self.listWidget_2.clear()
-                with xls:
-                    for n in xls.sheet_names:
-                        self.sheets.append(xls.parse(n))
-                        item = self.listWidget_2.item(item_num)
-                        if item is None:
-                            item = QtWidgets.QListWidgetItem()
-                            item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
-                            item.setCheckState(QtCore.Qt.Unchecked)
-                            self.listWidget_2.addItem(item)
-                        else:
-                            item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
-                            item.setCheckState(QtCore.Qt.Unchecked)
-                        item.setText(QtCore.QCoreApplication.translate("Main_frame", str(n)))
-                        item_num = item_num + 1
-                msg = QtWidgets.QMessageBox()
-                msg.setIcon(QtWidgets.QMessageBox.Information)   
-                msg.setWindowTitle("Info")
-                msg.setText("Load Success !")
-                msg.setInformativeText("Running Time : {0}".format(int(time.time()-start_time)))
-                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                msg.exec_()
+        if filename is '':
+            # logging
+            return
+        
+        # extract only file name from full path
+        self.name_label = filename.split('/')[-1]
+        self.file_name.setText(QtCore.QCoreApplication.translate("Main_frame", self.name_label))
 
-            else:
-                xls = None
+        self.sheets = list()
+        self.sheetlist_Widget.clear()
+
+        start_time = time()
+        # read file
+        with pd.ExcelFile(filename) as xls:
             self.set_xlsx(xls)
+            for name in xls.sheet_names:
+                self.sheets.append(xls.parse(name)) # parse는 분석 시작 후로 미루어야 할 듯
+
+                # add item(sheet) into Widgetlist
+                item = QtWidgets.QListWidgetItem()
+                item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
+                item.setCheckState(QtCore.Qt.Unchecked)
+                self.sheetlist_Widget.addItem(item)
+                item.setText(QtCore.QCoreApplication.translate("Main_frame", str(name)))
+            
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Information)   
+        msg.setWindowTitle("Info")
+        msg.setText("Load Success !")
+        msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.exec_()            
+            
 
     def replace_(self, L):
         L = L.replace('\n',',').replace(',,',',').replace(',,',',').replace(',,',',').replace(',,',',').strip(',').split(',')
@@ -355,9 +350,9 @@ class Ui_Main_frame(object):
             try:
                 logging.basicConfig(filename='./GPA_log.log',level=logging.DEBUG)
                 selected_sheets = list()
-                for index in range(self.listWidget_2.count()):
-                    if self.listWidget_2.item(index).checkState() == QtCore.Qt.Checked:
-                        selected_sheets.append(self.listWidget_2.item(index).text())
+                for index in range(self.sheetlist_Widget.count()):
+                    if self.sheetlist_Widget.item(index).checkState() == QtCore.Qt.Checked:
+                        selected_sheets.append(self.sheetlist_Widget.item(index).text())
                         Dplist = self.Dm_position.currentText()
                         Dslist = self.Dm_seq.currentText()
                         Dgelist = self.Genome_st.currentText()
@@ -377,25 +372,25 @@ class Ui_Main_frame(object):
                 Genome_edit_ = str(self.Genome_edit.toPlainText())
                 Genome_edit_ = self.replace_(Genome_edit_)
 
-                start_time = time.time()
-                logging.info("{0} Start Initialization of Data".format(time.time()))
-                excel = Excel.Excel(self.xls, self.filename_, selected_sheets, 
+                start_time = time()
+                logging.info("{0} Start Initialization of Data".format(time()))
+                excel = Excel.Excel(self.xls, self.name_label, selected_sheets, 
                     Dplist, Dslist, Dgelist, DRelist, DORF, Dseq, 
                     Genome_edit_, Repeat_edit_, ORF_edit_, NCR_edit_)
                 
                 if self.radio_full.isChecked():
                     Analyze_type = "Full"
-                    logging.info("{0} Full Sequence Analyzation".format(time.time()))
+                    logging.info("{0} Full Sequence Analyzation".format(time()))
                 else:
                     Analyze_type = "Difference_of_Minor"
-                    logging.info("{0} Difference_of_Minor Analyzation".format(time.time()))
+                    logging.info("{0} Difference_of_Minor Analyzation".format(time()))
 
                 # Start Ananlyzation
-                logging.info("{0} Start Analyzation".format(time.time()))
+                logging.info("{0} Start Analyzation".format(time()))
                 self.Analyze_Dialog(excel.Analyze(Analyze_type), start_time)
 
             except Exception as e:
-                logging.error("{0} {1}".format(time.time(), e))
+                logging.error("{0} {1}".format(time(), e))
                 
     def Analyze_Dialog(self, Result, start_time):
         msg = QtWidgets.QMessageBox()
@@ -404,20 +399,20 @@ class Ui_Main_frame(object):
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         if Result == "Success":
             msg.setText("Success !")
-            msg.setInformativeText("Running Time : {0}".format(int(time.time()-start_time)))
-            logging.error("{0} Success to finish the analyzation".format(time.time()))
+            msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
+            logging.error("{0} Success to finish the analyzation".format(time()))
         elif Result == "Error":
             msg.setText("Error!\n컬럼명 일치 여부, 입력 누락, 컬럼 선택 등 기타 주의사항 확인")
             msg.setInformativeText("ls123kr@naver.com 문의")
-            logging.error("{0} Etc Error".format(time.time()))
+            logging.error("{0} Etc Error".format(time()))
         elif Result == "Permission":
             msg.setText("Permission Error!\n생성하려는 파일과 동일한 이름의 파일이 열려있습니다.")
-            logging.error("{0} File Permission Error".format(time.time()))
+            logging.error("{0} File Permission Error".format(time()))
         msg.exec_()
 
     def on_change(self):
-        curitem = self.listWidget_2.currentItem()
-        idx = self.listWidget_2.currentRow()
+        curitem = self.sheetlist_Widget.currentItem()
+        idx = self.sheetlist_Widget.currentRow()
         if curitem == None:
             return
         isselect = QtCore.Qt.Unchecked

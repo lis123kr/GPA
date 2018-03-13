@@ -3,10 +3,8 @@ import numpy as np
 import pandas as pd
 import logging, time
 
-class Excel(object):
-	def __init__(self, xls, filename, selected_sheets, 
-		Dpname, Dsname, Dgename, Drename, Dorf, Dseq,
-		Genome_edit_, Repeat_edit_, ORF_edit_, NCR_edit_):
+class Analyzer(object):
+	def __init__(self, book):
 		"""
 		#########################################################################
 		#																		#
@@ -30,17 +28,21 @@ class Excel(object):
 			P_Raw 								# Removed only '-' data in Sequence
 
 		"""
-		self.filename = filename.split('.')[0]
-		self.limits = 35.0					
-		self.xls = xls 						
-		self.sheet_names = selected_sheets 	
-		self.Dp_name = Dpname 				
-		self.Ds_name = Dsname 				
-		self.Dge_name = Dgename 			
-		self.Dre_name = Drename 			
-		self.Dorf = Dorf 					
-		self.Dseq = Dseq					
-		self.length = len(self.sheet_names)	
+		self.book = book
+
+		self.book.initialize()
+		print(5)
+		# self.filename = filename.split('.')[0]
+		# self.limits = 35.0					
+		# self.xls = xls 						
+		# self.sheet_names = selected_sheets 	
+		# self.Dp_name = Dpname 				
+		# self.Ds_name = Dsname 				
+		# self.Dge_name = Dgename 			
+		# self.Dre_name = Drename 			
+		# self.Dorf = Dorf 					
+		# self.Dseq = Dseq					
+		# self.length = len(self.sheet_names)	
 		self.P_Raw = list()
 		self.Pxbp = list()
 		self.PxLength = list()
@@ -201,13 +203,13 @@ class Excel(object):
 		else:
 			return tmp_x[((x_maf - y_maf) >= 5.0).values] , x_major.loc[tmp_x.index], x_minor.loc[tmp_x.index]
 
-	def type_check(self, L):
-		for i in range(0,len(L)):
-			try:
-				L[i] = int(L[i])
-			except:
-				L[i] = str(L[i])
-		return L
+	# def type_check(self, L):
+	# 	for i in range(0,len(L)):
+	# 		try:
+	# 			L[i] = int(L[i])
+	# 		except:
+	# 			L[i] = str(L[i])
+	# 	return L
 
 	def Analyze(self, Analyze_type):
 		try:

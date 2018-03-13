@@ -10,10 +10,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from time import time
 import rc_rc
 import pandas as pd
-import Excel
 import logging
+from book import Book
+from analyzer import Analyzer
 
 class Ui_Main_frame(object):
+
+    book = None
+
     def setupUi(self, Main_frame):
         Main_frame.setObjectName("Main_frame")
         Main_frame.setWindowModality(QtCore.Qt.NonModal)
@@ -79,13 +83,13 @@ class Ui_Main_frame(object):
         item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
         item.setCheckState(QtCore.Qt.Checked)
         self.sheetlist_Widget.addItem(item)
-        self.file_name = QtWidgets.QLabel(self.groupBox)
-        self.file_name.setGeometry(QtCore.QRect(20, 40, 191, 31))
+        self.filename_label = QtWidgets.QLabel(self.groupBox)
+        self.filename_label.setGeometry(QtCore.QRect(20, 40, 191, 31))
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
-        self.file_name.setFont(font)
-        self.file_name.setObjectName("file_name")
+        self.filename_label.setFont(font)
+        self.filename_label.setObjectName("filename_label")
         self.Load_btn = QtWidgets.QPushButton(self.groupBox)
         self.Load_btn.setGeometry(QtCore.QRect(310, 40, 151, 31))
         font = QtGui.QFont()
@@ -106,9 +110,9 @@ class Ui_Main_frame(object):
         self.groupBox_2 = QtWidgets.QGroupBox(Main_frame)
         self.groupBox_2.setGeometry(QtCore.QRect(520, 120, 211, 421))
         self.groupBox_2.setObjectName("groupBox_2")
-        self.Dm_seq = QtWidgets.QComboBox(self.groupBox_2)
-        self.Dm_seq.setGeometry(QtCore.QRect(20, 90, 171, 21))
-        self.Dm_seq.setObjectName("Dm_seq")
+        self.Dumaseq_Combobox = QtWidgets.QComboBox(self.groupBox_2)
+        self.Dumaseq_Combobox.setGeometry(QtCore.QRect(20, 90, 171, 21))
+        self.Dumaseq_Combobox.setObjectName("Dumaseq_Combobox")
         self.label = QtWidgets.QLabel(self.groupBox_2)
         self.label.setGeometry(QtCore.QRect(20, 70, 141, 18))
         font = QtGui.QFont()
@@ -121,27 +125,27 @@ class Ui_Main_frame(object):
         font.setPointSize(7)
         self.label_2.setFont(font)
         self.label_2.setObjectName("label_2")
-        self.Genome_st = QtWidgets.QComboBox(self.groupBox_2)
-        self.Genome_st.setGeometry(QtCore.QRect(20, 190, 171, 24))
-        self.Genome_st.setObjectName("Genome_st")
+        self.GenomeST_combobox = QtWidgets.QComboBox(self.groupBox_2)
+        self.GenomeST_combobox.setGeometry(QtCore.QRect(20, 190, 171, 24))
+        self.GenomeST_combobox.setObjectName("GenomeST_combobox")
         self.label_3 = QtWidgets.QLabel(self.groupBox_2)
         self.label_3.setGeometry(QtCore.QRect(20, 220, 121, 18))
         font = QtGui.QFont()
         font.setPointSize(7)
         self.label_3.setFont(font)
         self.label_3.setObjectName("label_3")
-        self.Repeat_re = QtWidgets.QComboBox(self.groupBox_2)
-        self.Repeat_re.setGeometry(QtCore.QRect(20, 240, 171, 24))
-        self.Repeat_re.setObjectName("Repeat_re")
+        self.RepeatReG_combobox = QtWidgets.QComboBox(self.groupBox_2)
+        self.RepeatReG_combobox.setGeometry(QtCore.QRect(20, 240, 171, 24))
+        self.RepeatReG_combobox.setObjectName("RepeatReG_combobox")
         self.label_4 = QtWidgets.QLabel(self.groupBox_2)
         self.label_4.setGeometry(QtCore.QRect(20, 270, 77, 18))
         font = QtGui.QFont()
         font.setPointSize(7)
         self.label_4.setFont(font)
         self.label_4.setObjectName("label_4")
-        self.ORF = QtWidgets.QComboBox(self.groupBox_2)
-        self.ORF.setGeometry(QtCore.QRect(20, 290, 171, 24))
-        self.ORF.setObjectName("ORF")
+        self.ORF_combobox = QtWidgets.QComboBox(self.groupBox_2)
+        self.ORF_combobox.setGeometry(QtCore.QRect(20, 290, 171, 24))
+        self.ORF_combobox.setObjectName("ORF_combobox")
         self.label_5 = QtWidgets.QLabel(self.groupBox_2)
         self.label_5.setGeometry(QtCore.QRect(20, 330, 181, 16))
         palette = QtGui.QPalette()
@@ -170,18 +174,18 @@ class Ui_Main_frame(object):
         self.label_5.setFont(font)
         self.label_5.setAutoFillBackground(False)
         self.label_5.setObjectName("label_5")
-        self.Dm_position = QtWidgets.QComboBox(self.groupBox_2)
-        self.Dm_position.setGeometry(QtCore.QRect(20, 40, 171, 24))
-        self.Dm_position.setObjectName("Dm_position")
+        self.DumaPos_Combobox = QtWidgets.QComboBox(self.groupBox_2)
+        self.DumaPos_Combobox.setGeometry(QtCore.QRect(20, 40, 171, 24))
+        self.DumaPos_Combobox.setObjectName("DumaPos_Combobox")
         self.label_9 = QtWidgets.QLabel(self.groupBox_2)
         self.label_9.setGeometry(QtCore.QRect(20, 20, 151, 18))
         font = QtGui.QFont()
         font.setPointSize(7)
         self.label_9.setFont(font)
         self.label_9.setObjectName("label_9")
-        self.SEQ = QtWidgets.QComboBox(self.groupBox_2)
-        self.SEQ.setGeometry(QtCore.QRect(20, 140, 171, 24))
-        self.SEQ.setObjectName("SEQ")
+        self.seq_combobox = QtWidgets.QComboBox(self.groupBox_2)
+        self.seq_combobox.setGeometry(QtCore.QRect(20, 140, 171, 24))
+        self.seq_combobox.setObjectName("seq_combobox")
         self.label_10 = QtWidgets.QLabel(self.groupBox_2)
         self.label_10.setGeometry(QtCore.QRect(20, 120, 121, 18))
         font = QtGui.QFont()
@@ -235,9 +239,9 @@ class Ui_Main_frame(object):
         font.setPointSize(8)
         self.label_14.setFont(font)
         self.label_14.setObjectName("label_14")
-        self.ORF_edit = QtWidgets.QTextEdit(self.groupBox_3)
-        self.ORF_edit.setGeometry(QtCore.QRect(380, 50, 141, 161))
-        self.ORF_edit.setObjectName("ORF_edit")
+        self.ORF_combobox_edit = QtWidgets.QTextEdit(self.groupBox_3)
+        self.ORF_combobox_edit.setGeometry(QtCore.QRect(380, 50, 141, 161))
+        self.ORF_combobox_edit.setObjectName("ORF_combobox_edit")
         self.NCR_edit = QtWidgets.QTextEdit(self.groupBox_3)
         self.NCR_edit.setGeometry(QtCore.QRect(550, 50, 141, 161))
         self.NCR_edit.setObjectName("NCR_edit")
@@ -267,7 +271,7 @@ class Ui_Main_frame(object):
         item = self.sheetlist_Widget.item(1)
         item.setText(_translate("Main_frame", "sheet2"))
         self.sheetlist_Widget.setSortingEnabled(__sortingEnabled)
-        self.file_name.setText(_translate("Main_frame", "sample.xlsx"))
+        self.filename_label.setText(_translate("Main_frame", "sample.xlsx"))
         self.groupBox_2.setTitle(_translate("Main_frame", "Column 명 설정"))
         self.label.setText(_translate("Main_frame", "Duma Seqeunce"))
         self.label_2.setText(_translate("Main_frame", "Genome Structure"))
@@ -293,10 +297,11 @@ class Ui_Main_frame(object):
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'Gulim\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
-        self.label_13.setText(_translate("Main_frame", "ORF"))
+        self.label_13.setText(_translate("Main_frame", "ORF_combobox"))
         self.label_14.setText(_translate("Main_frame", "NCR"))
 
     def getfile(self):
+        self.book = Book()
         # get full path of selected file
         # filename = (filepath, filetype)
         from os import getenv
@@ -308,16 +313,16 @@ class Ui_Main_frame(object):
             return
         
         # extract only file name from full path
-        self.name_label = filename.split('/')[-1]
-        self.file_name.setText(QtCore.QCoreApplication.translate("Main_frame", self.name_label))
+        self.book.filename = filename.split('/')[-1]
+        self.filename_label.setText(QtCore.QCoreApplication.translate("Main_frame", self.book.filename))
 
-        self.sheets = list()
+        self.sheets = []
         self.sheetlist_Widget.clear()
 
-        start_time = time()
+        t1 = time()
         # read file
         with pd.ExcelFile(filename) as xls:
-            self.set_xlsx(xls)
+            self.book.xls = xls
             for name in xls.sheet_names:
                 self.sheets.append(xls.parse(name)) # parse는 분석 시작 후로 미루어야 할 듯
 
@@ -332,10 +337,10 @@ class Ui_Main_frame(object):
         msg.setIcon(QtWidgets.QMessageBox.Information)   
         msg.setWindowTitle("Info")
         msg.setText("Load Success !")
-        msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
+        msg.setInformativeText("Running Time : {0}".format(int(time()-t1)))
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.exec_()            
-            
+
 
     def replace_(self, L):
         L = L.replace('\n',',').replace(',,',',').replace(',,',',').replace(',,',',').replace(',,',',').strip(',').split(',')
@@ -346,37 +351,36 @@ class Ui_Main_frame(object):
         return L
 
     def Analyzing(self):
-        if self.xls is not None:
+        if self.book.xls is not None:
             try:
                 logging.basicConfig(filename='./GPA_log.log',level=logging.DEBUG)
-                selected_sheets = list()
+
                 for index in range(self.sheetlist_Widget.count()):
                     if self.sheetlist_Widget.item(index).checkState() == QtCore.Qt.Checked:
-                        selected_sheets.append(self.sheetlist_Widget.item(index).text())
-                        Dplist = self.Dm_position.currentText()
-                        Dslist = self.Dm_seq.currentText()
-                        Dgelist = self.Genome_st.currentText()
-                        DRelist = self.Repeat_re.currentText()
-                        DORF = self.ORF.currentText()
-                        Dseq = self.SEQ.currentText()
+                        self.book.sheet_list.append(self.sheetlist_Widget.item(index).text())
+                
+                self.book.nsheets = len(self.book.sheet_list)
+                self.book.col_DumaPosition = self.DumaPos_Combobox.currentText()
+                self.book.col_DumaSeq = self.Dumaseq_Combobox.currentText()
+                self.book.col_Sequence = self.seq_combobox.currentText()
+                self.book.col_GenomeStructure = self.GenomeST_combobox.currentText()
+                self.book.col_RepeatRegion = self.RepeatReG_combobox.currentText()
+                self.book.col_ORF = self.ORF_combobox.currentText()
 
-                Repeat_edit_ = str(self.Repeat_edit.toPlainText())
-                Repeat_edit_ = self.replace_(Repeat_edit_)
-
-                ORF_edit_ = str(self.ORF_edit.toPlainText())
-                ORF_edit_ = self.replace_(ORF_edit_)
-
-                NCR_edit_ = str(self.NCR_edit.toPlainText())
-                NCR_edit_ = self.replace_(NCR_edit_)
-
-                Genome_edit_ = str(self.Genome_edit.toPlainText())
-                Genome_edit_ = self.replace_(Genome_edit_)
-
+                self.book.GenomeStructure = self.replace_(str(self.Genome_edit.toPlainText()))
+                self.book.RepeatRegion = self.replace_(str(self.Repeat_edit.toPlainText()))
+                self.book.ORF = self.replace_(str(self.ORF_combobox_edit.toPlainText()))
+                self.book.NCR = self.replace_(str(self.NCR_edit.toPlainText()))
+                
+                
                 start_time = time()
                 logging.info("{0} Start Initialization of Data".format(time()))
-                excel = Excel.Excel(self.xls, self.name_label, selected_sheets, 
-                    Dplist, Dslist, Dgelist, DRelist, DORF, Dseq, 
-                    Genome_edit_, Repeat_edit_, ORF_edit_, NCR_edit_)
+                
+                excel = Analyzer(self.book)
+                
+                # excel = Excel.Excel(self.xls, self.name_label, selected_sheets, 
+                #     Dplist, Dslist, Dgelist, DRelist, DORF_combobox, Dseq, 
+                #     Genome_edit_, Repeat_edit_, ORF_combobox_edit_, NCR_edit_)
                 
                 if self.radio_full.isChecked():
                     Analyze_type = "Full"
@@ -415,32 +419,29 @@ class Ui_Main_frame(object):
         idx = self.sheetlist_Widget.currentRow()
         if curitem == None:
             return
-        isselect = QtCore.Qt.Unchecked
+        isselect = None        
         if curitem.checkState() == QtCore.Qt.Checked:
-            isselect = QtCore.Qt.Unchecked 
+            isselect = QtCore.Qt.Unchecked
         else:
             isselect = QtCore.Qt.Checked
-            if self.xls is not None:
+            if self.book.xls is not None:
                 cursheet = self.sheets[idx]
-                if self.Dm_position.count() == 0:
-                    self.Dm_position.addItem('선택안함')
-                    self.Dm_seq.addItem('선택안함')
-                    self.Genome_st.addItem('선택안함')
-                    self.Repeat_re.addItem('선택안함')
-                    self.ORF.addItem('선택안함')
-                    self.SEQ.addItem('선택안함')
+                if self.DumaPos_Combobox.count() == 0:
+                    self.DumaPos_Combobox.addItem('선택안함')
+                    self.Dumaseq_Combobox.addItem('선택안함')
+                    self.GenomeST_combobox.addItem('선택안함')
+                    self.RepeatReG_combobox.addItem('선택안함')
+                    self.ORF_combobox.addItem('선택안함')
+                    self.seq_combobox.addItem('선택안함')
                     for col in cursheet.columns:
-                        self.Dm_position.addItem(col)
-                        self.Dm_seq.addItem(col)
-                        self.Genome_st.addItem(col)
-                        self.Repeat_re.addItem(col)
-                        self.ORF.addItem(col)
-                        self.SEQ.addItem(col)
+                        self.DumaPos_Combobox.addItem(col)
+                        self.Dumaseq_Combobox.addItem(col)
+                        self.GenomeST_combobox.addItem(col)
+                        self.RepeatReG_combobox.addItem(col)
+                        self.ORF_combobox.addItem(col)
+                        self.seq_combobox.addItem(col)
         curitem.setCheckState(isselect)
         curitem.setSelected(False)
-
-    def set_xlsx(self, xls):
-        self.xls = xls
 
 if __name__ == "__main__":
     import sys

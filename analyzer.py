@@ -28,8 +28,6 @@ class Analyzer(object):
 			bp["sum"] = bp[book.col_basepair].sum(axis=1)
 
 			# 35bp
-			# col_basepair 가 리스트라 문제가 생길듯
-
 			bp = bp[[book.col_GenomeStructure, book.col_RepeatRegion, 
 					book.col_ORF, book.col_Sequence, "sum"] + book.col_basepair]
 			# sum 값이 35 이상인 데이터 추출
@@ -39,8 +37,9 @@ class Analyzer(object):
 			# major, minor의 값을 추출
 			book.BPxMajor.append(pmajor)
 			book.BPxMinor.append(pminor)
-			bp['minor'] = pminor
-			bp['major'] = pmajor
+			# pminor, pmajor가 값을 가지지 않을 때 에러 발생
+			bp['minor'] = pminor if len(pminor) is not 0 else 0
+			bp['major'] = pmajor if len(pmajor) is not 0 else 0
 			
 			book.BP35.append(bp)			
 
@@ -55,11 +54,14 @@ class Analyzer(object):
 		PP_Raw = []
 		PP_Length = []
 		PP_sheets = []
-		for i, x in enumerate(book.BPRaw):
-			for j, y in enumerate(book.BPRaw):
+		book.BPxMinor.clear()
+		book.BPxMajor.clear()
+		book.BP35.clear()
+		for i, x in enumerate(self.BPRaw_):
+			for j, y in enumerate(self.BPRaw_):
 				if i >= j:
 					continue
-				PP_sheets.append(book.sheet_list[i]+" -> "+book.sheet_list[j])
+				PP_sheets.append(self.sheet_list_[i]+" -> "+self.sheet_list_[j])
 				bp, pmajor, pminor = self.Extract_difference_of_minor(x,y,type_, book)
 
 				bp["sum"] = bp[book.col_basepair].sum(axis=1)
@@ -73,10 +75,10 @@ class Analyzer(object):
 				bp = bp[ bp['sum'] >= book.constraints]
 				pmajor = pmajor.loc[bp.index]
 				pminor = pminor.loc[bp.index]
-				bp['minor'] = pminor
-				bp['major'] = pmajor
+				bp['minor'] = pminor if len(pminor) is not 0 else 0
+				bp['major'] = pmajor if len(pmajor) is not 0 else 0
 				book.BPxMajor.append(pmajor)
-				book.BPxMinor.append(pminor)				
+				book.BPxMinor.append(pminor)
 				book.BP35.append(bp)
 
 		book.BPRaw = PP_Raw
@@ -85,7 +87,7 @@ class Analyzer(object):
 		book.nsheets = len(book.sheet_list)
 
 		for bp in book.BP35:
-			tmp = -bp
+			tmp = -bp[book.col_basepair]
 			bps = tmp.values.argsort(axis=1)
 			bp['minor_idx'] = pd.DataFrame(bps[:,1], index=[bp.index]) if len(bp)!=0 else 0
 			bp['major_idx'] = pd.DataFrame(bps[:,0], index=[bp.index]) if len(bp)!=0 else 0
@@ -133,6 +135,8 @@ class Analyzer(object):
 		if Analyze_type == "Difference_of_Minor":
 			self.s1 = [ 0, 2.5, 5, 15, 25, 5]
 			self.s2 = [ 2.5, 5, 15, 25, 51.0, 51.0]
+			self.sheet_list_ = book.sheet_list.copy()
+			self.BPRaw_ = book.BPRaw.copy()
 			types_ = ["ASC", "DESC"]
 			for i in range(0,2):
 				wb = Workbook()
@@ -145,7 +149,7 @@ class Analyzer(object):
 				ws7 = wb.create_sheet("Base composition_2")
 
 				self.init_Minor(types_[i], book)
-				# self.sheet1_m(ws1, types_[i], book)
+				self.sheet1_m(ws1, types_[i], book)
 				self.sheet2(ws2, book)			
 				self.sheet3(ws3, book)			
 				self.sheet4_5(ws4, "ORF", book)			
@@ -253,46 +257,46 @@ class Analyzer(object):
 					asc = ''.join(asc2)
 					return asc[:p] + chr(ord(asc[p])+1) + asc[p+1:]
 
-	# def sheet1_m(self, ws, types_, book):
-	# 	logging.info("{0} Start Sheet1_m".format(time.time()))
-	# 	ws.title = "Polymorphic site"
-	# 	# A col
-	# 	ws['A1'] = types_
-	# 	ws.merge_cells(start_row=1, start_column=1, end_row=2, end_column=2)
+	def sheet1_m(self, ws, types_, book):
+		logging.info("{0} Start Sheet1_m, type : {1}".format(time.time(), types_))
+		ws.title = "Polymorphic site"
+		# A col
+		ws['A1'] = types_
+		ws.merge_cells(start_row=1, start_column=1, end_row=2, end_column=2)
 		
-	# 	ws['A3'] = self.filename
-	# 	ws.merge_cells(start_row=3, start_column=1, end_row=2+self.length, end_column=1)
-	# 	# C col
-	# 	ws['C1'] = "Genome length (bp)"
-	# 	ws.merge_cells(start_row=1, start_column=3, end_row=2, end_column=3)
-	# 	# D col
-	# 	ws['D1'] = "Genome length (35이상)"
-	# 	ws.merge_cells(start_row=1, start_column=4, end_row=2, end_column=4)
+		# C col
+		ws['C1'] = "Genome length (bp)"
+		ws.merge_cells(start_row=1, start_column=3, end_row=2, end_column=3)
+		# D col
+		ws['D1'] = "Genome length (35이상)"
+		ws.merge_cells(start_row=1, start_column=4, end_row=2, end_column=4)
 		
-	# 	ws['E1'] = "Average of MAF"
-	# 	ws.merge_cells(start_row=1, start_column=5, end_row=2, end_column=5)
+		ws['E1'] = "Average of MAF"
+		ws.merge_cells(start_row=1, start_column=5, end_row=2, end_column=5)
 
-	# 	ws['F1'] = "Number of polymorphic sites"
-	# 	ws.merge_cells(start_row=1, start_column=6, end_row=1, end_column=11)
+		ws['F1'] = "Number of polymorphic sites"
+		ws.merge_cells(start_row=1, start_column=6, end_row=1, end_column=11)
 
-	# 	ws['F2'] = "0≤n<2.5"
-	# 	ws['G2'] = "2.5≤n<5"
-	# 	ws['H2'] = "5≤n<15"
-	# 	ws['I2'] = "15≤n<25"
-	# 	ws['J2'] = "25≤n"
-	# 	ws['K2'] = "5≤n"
-	# 	for i in range(self.length):
-	# 		ws['B' + str(i+3)] = self.sheet_names[i]
-	# 		ws['C' + str(i+3)] = self.PxLength[i]
-	# 		ws['D' + str(i+3)] = len(self.P_Raw35[i])
-	# 		ws['E' + str(i+3)] = str(round(self.PxMAF[i], 3)) + '%'
-	# 		ws['F' + str(i+3)] = self.get_Number_of_GPS(self.PxMinor[i], self.PxSum[i], 0.0, 2.5)[1] if len(self.PxMinor[i])!=0 else 0
-	# 		ws['G' + str(i+3)] = self.get_Number_of_GPS(self.PxMinor[i], self.PxSum[i], 2.5, 5.0)[1] if len(self.PxMinor[i])!=0 else 0
-	# 		ws["H" + str(i+3)] = self.get_Number_of_GPS(self.PxMinor[i], self.PxSum[i], 5.0, 15.0)[1] if len(self.PxMinor[i])!=0 else 0
-	# 		ws["I" + str(i+3)] = self.get_Number_of_GPS(self.PxMinor[i], self.PxSum[i], 15.0, 25.0)[1] if len(self.PxMinor[i])!=0 else 0
-	# 		ws["J" + str(i+3)] = self.get_Number_of_GPS(self.PxMinor[i], self.PxSum[i], 25.0, 51.0)[1] if len(self.PxMinor[i])!=0 else 0
-	# 		ws["K" + str(i+3)] = self.get_Number_of_GPS(self.PxMinor[i], self.PxSum[i], 5.0, 51.0)[1] if len(self.PxMinor[i])!=0 else 0
-	# 	logging.info("{0} End Sheet1_m".format(time.time()))
+		ws['F2'] = "0≤n<2.5"
+		ws['G2'] = "2.5≤n<5"
+		ws['H2'] = "5≤n<15"
+		ws['I2'] = "15≤n<25"
+		ws['J2'] = "25≤n"
+		ws['K2'] = "5≤n"
+		for i in range(book.nsheets):
+			ws['A' + str(i+3)] = book.sheet_list[i]
+			ws.merge_cells(start_row=i+3, start_column=1, end_row=i+3, end_column=2)
+			ws['C' + str(i+3)] = book.BPRawLength[i]
+			ws['D' + str(i+3)] = len(book.BP35[i])
+			s, l, _ = self.get_Number_of_GPS(book.BP35[i], 5.0, 51.0) if len(book.BPxMinor[i]) is not 0 else (0,0,0)
+			ws['E' + str(i+3)] = str(round(s/l, 3)) + '%' if l is not 0 else '-'
+			ws['F' + str(i+3)] = self.get_Number_of_GPS(book.BP35[i], 0.0, 2.5)[1] if len(book.BPxMinor[i])!=0 else 0
+			ws['G' + str(i+3)] = self.get_Number_of_GPS(book.BP35[i], 2.5, 5.0)[1] if len(book.BPxMinor[i])!=0 else 0
+			ws["H" + str(i+3)] = self.get_Number_of_GPS(book.BP35[i], 5.0, 15.0)[1] if len(book.BPxMinor[i])!=0 else 0
+			ws["I" + str(i+3)] = self.get_Number_of_GPS(book.BP35[i], 15.0, 25.0)[1] if len(book.BPxMinor[i])!=0 else 0
+			ws["J" + str(i+3)] = self.get_Number_of_GPS(book.BP35[i], 25.0, 51.0)[1] if len(book.BPxMinor[i])!=0 else 0
+			ws["K" + str(i+3)] = self.get_Number_of_GPS(book.BP35[i], 5.0, 51.0)[1] if len(book.BPxMinor[i])!=0 else 0
+		logging.info("{0} End Sheet1_m, type : {1}".format(time.time(), types_))
 
 	def sheet1(self,ws, book):
 		logging.info("{0} Start Sheet1".format(time.time()))
@@ -446,7 +450,7 @@ class Analyzer(object):
 			cnt_num = 0
 			for ix in range(0, len(book.GenomeStructure)):
 				ws['B' + str(G_rows[ix])] = book.GenomeStructure[ix]
-				nlen = len(book.P0[ book.P0[ book.col_GenomeStructure ] == book.GenomeStructure[ix]]) # dumas length 기준
+				nlen = len(book.Dumas[ book.Dumas[ book.col_GenomeStructure ] == book.GenomeStructure[ix]]) # dumas length 기준
 				ws['C' + str(G_rows[ix])] = nlen
 				cnt_num += nlen
 			ws['B' + str(r+3+len(book.GenomeStructure))] = "Total"
@@ -457,7 +461,7 @@ class Analyzer(object):
 			R_rows = list(range(r+4+len(book.GenomeStructure), nr))
 			for ix in range(0, len(book.RepeatRegion)):
 				ws['B' + str(R_rows[ix])] = book.RepeatRegion[ix]
-				nlen = len(book.P0[ book.P0[ book.col_RepeatRegion ] == book.RepeatRegion[ix]])
+				nlen = len(book.Dumas[ book.Dumas[ book.col_RepeatRegion ] == book.RepeatRegion[ix]])
 				ws['C'+str(R_rows[ix])] = nlen
 				cnt_num += nlen
 			ws['B'+str(nr)] = 'Total'
@@ -467,8 +471,8 @@ class Analyzer(object):
 			ws["A"+str(nr+1)] = "ORF"
 			ws["A"+str(nr+2)] = "NCR"
 			# ORF NCR Full Length
-			ws['C'+str(nr+1)] = len(book.P0[ book.P0[book.col_ORF].isin(book.ORF)])
-			ws['C'+str(nr+2)] = len(book.P0[ book.P0[book.col_ORF].isin(book.NCR)])
+			ws['C'+str(nr+1)] = len(book.Dumas[ book.Dumas[book.col_ORF].isin(book.ORF)])
+			ws['C'+str(nr+2)] = len(book.Dumas[ book.Dumas[book.col_ORF].isin(book.NCR)])
 			# end B, C columns
 			
 			# ncol = 'D'
@@ -482,12 +486,10 @@ class Analyzer(object):
 				s, l, minor_ = self.get_Number_of_GPS(book.BP35[c], self.s1[i], self.s2[i])
 				maf_ = str(round(s/l, 3)) + '%' if l is not 0 else '-'
 
-				# 				P0 가 돼야할 거 같음 - 검토
 				tx_rows = book.BP35[c].loc[ minor_.index ]
 				tx_orf = tx_rows[ tx_rows[ book.col_ORF ].isin(book.ORF)]
 				tx_ncr = tx_rows[ tx_rows[ book.col_ORF ].isin(book.NCR)]
 
-				
 				ws.merge_cells(start_row=r, start_column=4, end_row=r, end_column=4 + book.nsheets - 1)
 				ws[col+str(r+1)] = book.filename
 				ws.merge_cells(start_row=r+1, start_column=4, end_row=r+1, end_column=4 + book.nsheets - 1)

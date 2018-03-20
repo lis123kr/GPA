@@ -10,10 +10,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from time import time
 import rc_rc
 import pandas as pd
-<<<<<<< HEAD:GPA_UI.py
-import Excel
-=======
->>>>>>> UI:GPA_UI.py
 import logging
 from book import Book
 from analyzer import Analyzer
@@ -87,13 +83,8 @@ class Ui_Main_frame(object):
         item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
         item.setCheckState(QtCore.Qt.Checked)
         self.sheetlist_Widget.addItem(item)
-<<<<<<< HEAD:GPA_UI.py
-        self.file_name = QtWidgets.QLabel(self.groupBox)
-        self.file_name.setGeometry(QtCore.QRect(20, 40, 191, 31))
-=======
         self.filename_label = QtWidgets.QLabel(self.groupBox)
         self.filename_label.setGeometry(QtCore.QRect(20, 40, 191, 31))
->>>>>>> UI:GPA_UI.py
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
@@ -280,11 +271,7 @@ class Ui_Main_frame(object):
         item = self.sheetlist_Widget.item(1)
         item.setText(_translate("Main_frame", "sheet2"))
         self.sheetlist_Widget.setSortingEnabled(__sortingEnabled)
-<<<<<<< HEAD:GPA_UI.py
-        self.file_name.setText(_translate("Main_frame", "sample.xlsx"))
-=======
         self.filename_label.setText(_translate("Main_frame", "sample.xlsx"))
->>>>>>> UI:GPA_UI.py
         self.groupBox_2.setTitle(_translate("Main_frame", "Column 명 설정"))
         self.label.setText(_translate("Main_frame", "Duma Seqeunce"))
         self.label_2.setText(_translate("Main_frame", "Genome Structure"))
@@ -323,38 +310,6 @@ class Ui_Main_frame(object):
         if filename is '':
             # logging
             return
-<<<<<<< HEAD:GPA_UI.py
-        
-        # extract only file name from full path
-        self.name_label = filename.split('/')[-1]
-        self.file_name.setText(QtCore.QCoreApplication.translate("Main_frame", self.name_label))
-
-        self.sheets = list()
-        self.sheetlist_Widget.clear()
-
-        start_time = time()
-        # read file
-        with pd.ExcelFile(filename) as xls:
-            self.set_xlsx(xls)
-            for name in xls.sheet_names:
-                self.sheets.append(xls.parse(name)) # parse는 분석 시작 후로 미루어야 할 듯
-
-                # add item(sheet) into Widgetlist
-                item = QtWidgets.QListWidgetItem()
-                item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
-                item.setCheckState(QtCore.Qt.Unchecked)
-                self.sheetlist_Widget.addItem(item)
-                item.setText(QtCore.QCoreApplication.translate("Main_frame", str(name)))
-            
-        msg = QtWidgets.QMessageBox()
-        msg.setIcon(QtWidgets.QMessageBox.Information)   
-        msg.setWindowTitle("Info")
-        msg.setText("Load Success !")
-        msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
-        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        msg.exec_()            
-            
-=======
         self.book = Book()
         # extract only file name from full path
         self.book.filename = filename.split('/')[-1]
@@ -385,7 +340,6 @@ class Ui_Main_frame(object):
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.exec_()            
 
->>>>>>> UI:GPA_UI.py
 
     def replace_(self, L):
         L = L.replace('\n',',').replace(',,',',').replace(',,',',').replace(',,',',').replace(',,',',').strip(',').split(',')
@@ -396,53 +350,6 @@ class Ui_Main_frame(object):
         return L
 
     def Analyzing(self):
-<<<<<<< HEAD:GPA_UI.py
-        if self.xls is not None:
-            try:
-                logging.basicConfig(filename='./GPA_log.log',level=logging.DEBUG)
-                selected_sheets = list()
-                for index in range(self.sheetlist_Widget.count()):
-                    if self.sheetlist_Widget.item(index).checkState() == QtCore.Qt.Checked:
-                        selected_sheets.append(self.sheetlist_Widget.item(index).text())
-                        Dplist = self.Dm_position.currentText()
-                        Dslist = self.Dm_seq.currentText()
-                        Dgelist = self.Genome_st.currentText()
-                        DRelist = self.Repeat_re.currentText()
-                        DORF = self.ORF.currentText()
-                        Dseq = self.SEQ.currentText()
-
-                Repeat_edit_ = str(self.Repeat_edit.toPlainText())
-                Repeat_edit_ = self.replace_(Repeat_edit_)
-
-                ORF_edit_ = str(self.ORF_edit.toPlainText())
-                ORF_edit_ = self.replace_(ORF_edit_)
-
-                NCR_edit_ = str(self.NCR_edit.toPlainText())
-                NCR_edit_ = self.replace_(NCR_edit_)
-
-                Genome_edit_ = str(self.Genome_edit.toPlainText())
-                Genome_edit_ = self.replace_(Genome_edit_)
-
-                start_time = time()
-                logging.info("{0} Start Initialization of Data".format(time()))
-                excel = Excel.Excel(self.xls, self.name_label, selected_sheets, 
-                    Dplist, Dslist, Dgelist, DRelist, DORF, Dseq, 
-                    Genome_edit_, Repeat_edit_, ORF_edit_, NCR_edit_)
-                
-                if self.radio_full.isChecked():
-                    Analyze_type = "Full"
-                    logging.info("{0} Full Sequence Analyzation".format(time()))
-                else:
-                    Analyze_type = "Difference_of_Minor"
-                    logging.info("{0} Difference_of_Minor Analyzation".format(time()))
-
-                # Start Ananlyzation
-                logging.info("{0} Start Analyzation".format(time()))
-                self.Analyze_Dialog(excel.Analyze(Analyze_type), start_time)
-
-            except Exception as e:
-                logging.error("{0} {1}".format(time(), e))
-=======
         if self.book.xls is not None:
         # try:
             logging.basicConfig(filename='./GPA_log.log',level=logging.DEBUG)
@@ -480,26 +387,12 @@ class Ui_Main_frame(object):
 
         # except Exception as e:
         #     logging.error("{0} {1}".format(time(), e))
->>>>>>> UI:GPA_UI.py
                 
     def Analyze_Dialog(self, Result, start_time):
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Information)   
         msg.setWindowTitle("Info")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-<<<<<<< HEAD:GPA_UI.py
-        if Result == "Success":
-            msg.setText("Success !")
-            msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
-            logging.error("{0} Success to finish the analyzation".format(time()))
-        elif Result == "Error":
-            msg.setText("Error!\n컬럼명 일치 여부, 입력 누락, 컬럼 선택 등 기타 주의사항 확인")
-            msg.setInformativeText("ls123kr@naver.com 문의")
-            logging.error("{0} Etc Error".format(time()))
-        elif Result == "Permission":
-            msg.setText("Permission Error!\n생성하려는 파일과 동일한 이름의 파일이 열려있습니다.")
-            logging.error("{0} File Permission Error".format(time()))
-=======
         # if Result == "Success":
         #     msg.setText("Success !")
         #     msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
@@ -511,7 +404,6 @@ class Ui_Main_frame(object):
         # elif Result == "Permission":
         #     msg.setText("Permission Error!\n생성하려는 파일과 동일한 이름의 파일이 열려있습니다.")
         #     logging.error("{0} File Permission Error".format(time()))
->>>>>>> UI:GPA_UI.py
         msg.exec_()
 
     def on_change(self):

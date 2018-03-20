@@ -39,22 +39,18 @@ class Book:
 	# variables for preprocessing & analyzing
 	BPRaw = []
 
-	BPRawLength = [] #
+	BPRawLength = []
 
 	BP35 = []
-
-	BPxSum = [] #
 
 	BPxMajor = []
 	
 	BPxMinor = []
 
-	BPxMAX = []
-
 	P0 = None
 
-	P0_Raw35 = [] #
-
+	Dumas = None
+	
 	def type_check(self, L):
 		for i in range(0,len(L)):
 			try:
@@ -72,26 +68,32 @@ class Book:
 		self.NCR = self.type_check(self.NCR)
 
 	def mergesheets(self):
+		from pandas import merge
+
 		for x in self.sheet_list:
 			sheet = self.xls.parse(x)
 			if self.P0 is None:
 				self.P0 = sheet
 			else:
-				self.P0 = pd.merge(self.P0, sheet, how='outer', on=[self.col_GenomeStructure, 
+				self.P0 = merge(self.P0, sheet, how='outer', on=[self.col_GenomeStructure, 
 					self.col_RepeatRegion, self.col_ORF, self.col_DumaPosition, self.col_DumaSeq])
 			sheet = sheet[ sheet[self.col_Sequence] != '-' ]
 			self.BPRaw.append(sheet)
 			self.BPRawLength.append(len(sheet))
-
+		
+		self.Dumas = self.P0[ self.P0[self.col_DumaSeq] != '-' ]
+		
 	def get_major_minor(self, Passage):	
+		from numpy import zeros
+		from pandas import DataFrame
 		"""	
 			- major : 염기 A, G, C, T 중 가장 큰 값
 			- minor : 염기 중 두번째로 큰 값, argsort 후 인덱스 2의 값을 추출
 		"""
 		ranked_df = Passage.values.argsort(axis=1)		
-		arr = np.zeros((len(Passage),1))
+		arr = zeros((len(Passage),1))
 		for i, d in enumerate(ranked_df[:,2]):
 			arr[i] = Passage[i:i+1][self.col_basepair[d]]
-		major = pd.DataFrame(Passage.max(axis=1))
-		minor = pd.DataFrame(arr, index=major.index)		
+		major = DataFrame(Passage.max(axis=1))
+		minor = DataFrame(arr, index=major.index)		
 		return major, minor

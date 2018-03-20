@@ -297,11 +297,10 @@ class Ui_Main_frame(object):
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'Gulim\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
-        self.label_13.setText(_translate("Main_frame", "ORF_combobox"))
+        self.label_13.setText(_translate("Main_frame", "ORF"))
         self.label_14.setText(_translate("Main_frame", "NCR"))
 
     def getfile(self):
-        self.book = Book()
         # get full path of selected file
         # filename = (filepath, filetype)
         from os import getenv
@@ -311,7 +310,7 @@ class Ui_Main_frame(object):
         if filename is '':
             # logging
             return
-        
+        self.book = Book()
         # extract only file name from full path
         self.book.filename = filename.split('/')[-1]
         self.filename_label.setText(QtCore.QCoreApplication.translate("Main_frame", self.book.filename))
@@ -337,7 +336,7 @@ class Ui_Main_frame(object):
         msg.setIcon(QtWidgets.QMessageBox.Information)   
         msg.setWindowTitle("Info")
         msg.setText("Load Success !")
-        msg.setInformativeText("Running Time : {0}".format(int(time()-t1)))
+        msg.setInformativeText("Time : {0}".format(int(time()-t1)))
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.exec_()            
 
@@ -352,66 +351,59 @@ class Ui_Main_frame(object):
 
     def Analyzing(self):
         if self.book.xls is not None:
-            try:
-                logging.basicConfig(filename='./GPA_log.log',level=logging.DEBUG)
+        # try:
+            logging.basicConfig(filename='./GPA_log.log',level=logging.DEBUG)
+            
+            for index in range(self.sheetlist_Widget.count()):
+                if self.sheetlist_Widget.item(index).checkState() == QtCore.Qt.Checked:
+                    self.book.sheet_list.append(self.sheetlist_Widget.item(index).text())
+                    
+            self.book.col_DumaPosition = self.DumaPos_Combobox.currentText()
+            self.book.col_DumaSeq = self.Dumaseq_Combobox.currentText()
+            self.book.col_Sequence = self.seq_combobox.currentText()
+            self.book.col_GenomeStructure = self.GenomeST_combobox.currentText()
+            self.book.col_RepeatRegion = self.RepeatReG_combobox.currentText()
+            self.book.col_ORF = self.ORF_combobox.currentText()
 
-                for index in range(self.sheetlist_Widget.count()):
-                    if self.sheetlist_Widget.item(index).checkState() == QtCore.Qt.Checked:
-                        self.book.sheet_list.append(self.sheetlist_Widget.item(index).text())
-                
-                self.book.nsheets = len(self.book.sheet_list)
-                self.book.col_DumaPosition = self.DumaPos_Combobox.currentText()
-                self.book.col_DumaSeq = self.Dumaseq_Combobox.currentText()
-                self.book.col_Sequence = self.seq_combobox.currentText()
-                self.book.col_GenomeStructure = self.GenomeST_combobox.currentText()
-                self.book.col_RepeatRegion = self.RepeatReG_combobox.currentText()
-                self.book.col_ORF = self.ORF_combobox.currentText()
+            self.book.GenomeStructure = self.replace_(str(self.Genome_edit.toPlainText()))
+            self.book.RepeatRegion = self.replace_(str(self.Repeat_edit.toPlainText()))
+            self.book.ORF = self.replace_(str(self.ORF_combobox_edit.toPlainText()))
+            self.book.NCR = self.replace_(str(self.NCR_edit.toPlainText()))
+            
+            start_time = time()
+            
+            logging.info("{0} Start Initialization of Data".format(time()))
+            excel = Analyzer(self.book)
+            if self.radio_full.isChecked():
+                Analyze_type = "Full"
+                logging.info("{0} Start Analyzing of full sequence ".format(time()))
+            else:
+                Analyze_type = "Difference_of_Minor"
+                logging.info("{0} Start analyzing of difference_of_Minor Analyzation".format(time()))
 
-                self.book.GenomeStructure = self.replace_(str(self.Genome_edit.toPlainText()))
-                self.book.RepeatRegion = self.replace_(str(self.Repeat_edit.toPlainText()))
-                self.book.ORF = self.replace_(str(self.ORF_combobox_edit.toPlainText()))
-                self.book.NCR = self.replace_(str(self.NCR_edit.toPlainText()))
-                
-                
-                start_time = time()
-                logging.info("{0} Start Initialization of Data".format(time()))
-                
-                excel = Analyzer(self.book)
-                
-                # excel = Excel.Excel(self.xls, self.name_label, selected_sheets, 
-                #     Dplist, Dslist, Dgelist, DRelist, DORF_combobox, Dseq, 
-                #     Genome_edit_, Repeat_edit_, ORF_combobox_edit_, NCR_edit_)
-                
-                if self.radio_full.isChecked():
-                    Analyze_type = "Full"
-                    logging.info("{0} Full Sequence Analyzation".format(time()))
-                else:
-                    Analyze_type = "Difference_of_Minor"
-                    logging.info("{0} Difference_of_Minor Analyzation".format(time()))
+            # Start Analyzing
+            logging.info("{0} Start Analyzation".format(time()))
+            self.Analyze_Dialog(excel.Analyze(Analyze_type, excel.book), start_time)
 
-                # Start Ananlyzation
-                logging.info("{0} Start Analyzation".format(time()))
-                self.Analyze_Dialog(excel.Analyze(Analyze_type), start_time)
-
-            except Exception as e:
-                logging.error("{0} {1}".format(time(), e))
+        # except Exception as e:
+        #     logging.error("{0} {1}".format(time(), e))
                 
     def Analyze_Dialog(self, Result, start_time):
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Information)   
         msg.setWindowTitle("Info")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        if Result == "Success":
-            msg.setText("Success !")
-            msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
-            logging.error("{0} Success to finish the analyzation".format(time()))
-        elif Result == "Error":
-            msg.setText("Error!\n컬럼명 일치 여부, 입력 누락, 컬럼 선택 등 기타 주의사항 확인")
-            msg.setInformativeText("ls123kr@naver.com 문의")
-            logging.error("{0} Etc Error".format(time()))
-        elif Result == "Permission":
-            msg.setText("Permission Error!\n생성하려는 파일과 동일한 이름의 파일이 열려있습니다.")
-            logging.error("{0} File Permission Error".format(time()))
+        # if Result == "Success":
+        #     msg.setText("Success !")
+        #     msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
+        #     logging.info("{0} Success to finish the analyzation".format(time()))
+        # elif Result == "Error":
+        #     msg.setText("Error!\n컬럼명 일치 여부, 입력 누락, 컬럼 선택 등 기타 주의사항 확인")
+        #     msg.setInformativeText("ls123kr@naver.com 문의")
+        #     logging.error("{0} Etc Error".format(time()))
+        # elif Result == "Permission":
+        #     msg.setText("Permission Error!\n생성하려는 파일과 동일한 이름의 파일이 열려있습니다.")
+        #     logging.error("{0} File Permission Error".format(time()))
         msg.exec_()
 
     def on_change(self):

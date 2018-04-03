@@ -1,7 +1,38 @@
 from openpyxl import Workbook
 import numpy as np
 import pandas as pd
-import logging, time
+from logging import error, info
+from datetime import datetime
+
+def infolog(message):
+	info("{0} {1}".format(datetime.now().isoformat(), message))
+	print("{0} {1}".format(datetime.now().isoformat(), message))
+
+def errorlog(message):
+	error("{0} {1}".format(datetime.now().isoformat(), message))	
+
+def next_col(asc):
+	asc2 = list(asc)
+	if len(asc2) == 1 and asc2[0] != 'Z':
+		return chr(ord(asc2[0])+1)
+	elif len(asc2) == 1 and asc2[0] == 'Z':
+		return 'AA'
+	else:
+		if asc[-1] != 'Z':
+			return asc[:-1] + chr(ord(asc[-1])+1)
+		else:
+			p = None
+			for i in range(-1, -len(asc)-1, -1):
+				p = i
+				if asc2[i] == 'Z':
+					asc2[i] = 'A'
+				else:
+						break
+			if p == -len(asc) and asc[p] == 'Z':
+				return 'A'+''.join(asc2)
+			else:
+				asc = ''.join(asc2)
+				return asc[:p] + chr(ord(asc[p])+1) + asc[p+1:]
 
 class Analyzer(object):
 	def __init__(self, book):
@@ -18,7 +49,7 @@ class Analyzer(object):
 		
 		# get raw data of full basepair sequence
 		self.book.mergesequence()
-
+		# 뒤로 미룹시다
 		# get BP35, major, minor, index of major, minor
 		self.book.preprocessing()
 
@@ -60,95 +91,60 @@ class Analyzer(object):
 			return tmp_x[((x_maf - y_maf) >= 5.0).values] , x_major.loc[tmp_x.index], x_minor.loc[tmp_x.index]
 
 	def Analyze(self, Analyze_type, book):
-		try:
-			self.Analyze_type = Analyze_type
-			if Analyze_type == "Difference_of_Minor":
-				self.s1 = [ 0, 2.5, 5, 15, 25, 5]
-				self.s2 = [ 2.5, 5, 15, 25, 51.0, 51.0]
-				self.sheet_list_ = book.sheet_list.copy()
-				self.BPRaw_ = book.BPRaw.copy()
-				# types_ = ["ASC", "DESC"]
-				types_ = ["INC", "DEC"]
-				for i in range(0,2):
-					wb = Workbook()
-					ws1 = wb.active
-					ws2 = wb.create_sheet("GPS")
-					ws3 = wb.create_sheet("Genome structure")
-					ws4 = wb.create_sheet("ORF")
-					ws5 = wb.create_sheet("NCR")
-					ws6 = wb.create_sheet("Base composition_1")
-					ws7 = wb.create_sheet("Base composition_2")
-
-					self.init_Minor(types_[i], book)
-					self.sheet1_m(ws1, types_[i], book)
-					self.sheet2(ws2, book)			
-					self.sheet3(ws3, book)			
-					self.sheet4_5(ws4, "ORF", book)			
-					self.sheet4_5(ws5, "NCR", book)			
-					self.sheet6(ws6, book)			
-					self.sheet7(ws7, book)
-					wb.save("["+types_[i]+"분석]" + book.filename + '.xlsx')
-			else: # full
-				from fullseq import FullSeq
+	# try:
+		self.Analyze_type = Analyze_type
+		if Analyze_type == "Difference_of_Minor":
+			self.s1 = [ 0, 2.5, 5, 15, 25, 5]
+			self.s2 = [ 2.5, 5, 15, 25, 51.0, 51.0]
+			
+			types_ = ["INC", "DEC"]
+			from lowhigh import LowHigh
+			lh = LowHigh(book)
+			for i in range(0,2):
+				infolog("{0} analysis".format(types_[i]))
 				wb = Workbook()
-				ws1 = wb.active
-				ws2 = wb.create_sheet("GPS")
+				ws1 = wb.active				
 				ws3 = wb.create_sheet("Genome structure")
 				ws4 = wb.create_sheet("ORF")
 				ws5 = wb.create_sheet("NCR")
 				ws6 = wb.create_sheet("Base composition_1")
-				ws7 = wb.create_sheet("Base composition_2")
-				FullSeq.init_full(book)
-				FullSeq.sheet1(ws1, book)				
-				FullSeq.sheet2(ws2, book)			
-				FullSeq.sheet3(ws3, book)			
-				FullSeq.sheet4_5(ws4, "ORF", book)			
-				FullSeq.sheet4_5(ws5, "NCR", book)			
-				FullSeq.sheet6(ws6, book)			
-				FullSeq.sheet7(ws7, book)
-				wb.save("[분석]" + book.filename + '.xlsx')
-			book.P0.to_excel('[통합]'+book.filename+'.xlsx', index=False)
-			return "Success"
-		except PermissionError:
-			return "Permission"
-		except Exception as e:
-			logging.error("{0} {1}".format(datetime.now().isoformat(), e))
-			return "Error"
+				
+				lh.PolymorphicSite(ws1, types_[i], book)
+				lh.GenomeStr(ws3,types_[i], book)
+				lh.ORFNCR(ws4, types_[i], "ORF", book)
+				lh.ORFNCR(ws5, types_[i], "NCR", book)
+				lh.BaseComp(ws6, types_[i], book)
+				wb.save("["+types_[i]+"분석]" + book.filename + '.xlsx')
+		else: # full
+			from fullseq import FullSeq
+			fs = FullSeq(book)
+			wb = Workbook()
+			ws1 = wb.active
+			ws2 = wb.create_sheet("GPS")
+			ws3 = wb.create_sheet("Genome structure")
+			ws4 = wb.create_sheet("ORF")
+			ws5 = wb.create_sheet("NCR")
+			ws6 = wb.create_sheet("Base composition_1")
+			ws7 = wb.create_sheet("Base composition_2")
+			# FullSeq.init_full(book)
+			fs.sheet1(ws1, book)				
+			fs.sheet2(ws2, book)			
+			fs.sheet3(ws3, book)			
+			fs.sheet4_5(ws4, "ORF", book)			
+			fs.sheet4_5(ws5, "NCR", book)			
+			fs.sheet6(ws6, book)			
+			fs.sheet7(ws7, book)
+			wb.save("[분석]" + book.filename + '.xlsx')
+		book.P0.to_excel('[통합]'+book.filename+'.xlsx', index=False)
+	# 	return "Success"
+	# except PermissionError:
+	# 	return "Permission"
+	# except Exception as e:
+	# 	logging.error("{0} {1}".format(datetime.now().isoformat(), e))
+	# 	return "Error"
 
-	def get_Number_of_GPS(self, BP, s1, s2):
-		"""
-			s1, s2 범위의 maf값을 갖는 base pair의 수, 길이, minor 값을 
-		"""
-		maf_ = np.divide(BP[['minor']], BP[['sum']]) * 100
-		idx = np.logical_and(maf_>=s1, maf_<s2)
-		idx = idx.values.tolist()
-		return maf_[idx].sum()[0], len(BP[idx]), BP[['minor']][idx]
 
-	def next_col(self, asc):
-		asc2 = list(asc)
-		if len(asc2) == 1 and asc2[0] != 'Z':
-			return chr(ord(asc2[0])+1)
-		elif len(asc2) == 1 and asc2[0] == 'Z':
-			return 'AA'
-		else:
-			if asc[-1] != 'Z':
-				return asc[:-1] + chr(ord(asc[-1])+1)
-			else:
-				p = None
-				for i in range(-1, -len(asc)-1, -1):
-					p = i
-					if asc2[i] == 'Z':
-						asc2[i] = 'A'
-					else:
- 						break
-				if p == -len(asc) and asc[p] == 'Z':
-					return 'A'+''.join(asc2)
-				else:
-					asc = ''.join(asc2)
-					return asc[:p] + chr(ord(asc[p])+1) + asc[p+1:]
 
-	def infolog(self, message):
-		logging.info("{0} {1}".format(datetime.now().isoformat(), message))
 
-	def errorlog(self, message):
-		logging.error("{0} {1}".format(datetime.now().isoformat(), message))		
+
+	

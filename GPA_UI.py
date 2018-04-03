@@ -302,7 +302,7 @@ class Ui_Main_frame(object):
 
     def getfile(self):
         # get full path of selected file
-        # filename = (filepath, filetype)
+        # filename = (filepath, filetype)        
         from os import getenv
         filename = QtWidgets.QFileDialog.getOpenFileName(None, 'Open File', 
             getenv('HOME'), "Excel files (*.xlsx)")[0]

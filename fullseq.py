@@ -1,4 +1,7 @@
-from analyzer import get_Number_of_GPS, next_col, infolog
+from analyzer import next_col, infolog# book.get_Number_of_GPS, next_col, infolog
+import time, logging
+from datetime import datetime
+from numpy import divide, logical_and, logical_or
 class FullSeq:
 	"""
 		analysis of full sequence
@@ -6,7 +9,7 @@ class FullSeq:
 	def __init__(self, book):	
 		self.s1 = [ 2.5, 5, 15, 25, 5]
 		self.s2 = [ 5, 15, 25, 51.0, 51.0]	
-
+		
 	def insert_value_in_cell(self,ws, book, rows, col, BP, minor_, maf, colname, types):
 		"""
 			한 column에 데이터 삽입
@@ -36,14 +39,14 @@ class FullSeq:
 					cnt_sum+=len(mrows)
 				elif types == "MAF":
 					if len(mrows) != 0:
-						maf_ = np.divide(mrows[["minor"]], mrows[["sum"]]) * 100
+						maf_ = divide(mrows[["minor"]], mrows[["sum"]]) * 100
 						ws[col+str(rows[i])] = str(round(maf_.sum()[0] / len(maf_),3)) + '%'
 					else:
 						ws[col+str(rows[i])] = '-'
 			if types == "GPS":
 				ws[col+str(rows[len(rows)-1] + 1)] = cnt_sum
 			elif types == "MAF":
-				# s, l = self.get_Number_of_GPS(BP, s1, s2)
+				# s, l = self.book.get_Number_of_GPS(BP, s1, s2)
 				ws[col+str(rows[len(rows)-1] + 1)] = maf
 
 	def sheet1(self,ws, book):
@@ -61,7 +64,7 @@ class FullSeq:
 		ws['I2'] = "5≤n"
 		# A col
 		ws.merge_cells(start_row=1, start_column=1, end_row=2, end_column=2)
-		ws.merge_cells(start_row=1, start_column=3, end_row=2, end_column=3)		
+		ws.merge_cells(start_row=1, start_column=3, end_row=2, end_column=3)
 		ws.merge_cells(start_row=1, start_column=4, end_row=2, end_column=4)
 		
 		for i in range(book.nsheets):
@@ -69,13 +72,13 @@ class FullSeq:
 			ws['A' + str(i+3)] = book.sheet_list[i]
 			ws.merge_cells(start_row=3+i, start_column=1, end_row=3+i, end_column=2)
 			ws['C' + str(i+3)] = book.BPRawLength[i]
-			s, l, _ = get_Number_of_GPS(book.BP35[i], 5.0, 51.0)
+			s, l, _ = book.get_Number_of_GPS(book.BP35[i], 5.0, 51.0)
 			ws['D' + str(i+3)] = str(round(s / l, 3)) + '%'
-			ws['E' + str(i+3)] = get_Number_of_GPS(book.BP35[i], 2.5, 5.0)[1]
-			ws["F" + str(i+3)] = get_Number_of_GPS(book.BP35[i], 5.0, 15.0)[1]
-			ws["G" + str(i+3)] = get_Number_of_GPS(book.BP35[i], 15.0, 25.0)[1]
-			ws["H" + str(i+3)] = get_Number_of_GPS(book.BP35[i], 25.0, 51.0)[1]
-			ws["I" + str(i+3)] = get_Number_of_GPS(book.BP35[i], 5.0, 51.0)[1]
+			ws['E' + str(i+3)] = book.get_Number_of_GPS(book.BP35[i], 2.5, 5.0)[1]
+			ws["F" + str(i+3)] = book.get_Number_of_GPS(book.BP35[i], 5.0, 15.0)[1]
+			ws["G" + str(i+3)] = book.get_Number_of_GPS(book.BP35[i], 15.0, 25.0)[1]
+			ws["H" + str(i+3)] = book.get_Number_of_GPS(book.BP35[i], 25.0, 51.0)[1]
+			ws["I" + str(i+3)] = book.get_Number_of_GPS(book.BP35[i], 5.0, 51.0)[1]
 		logging.info("{0} End Sheet1".format(datetime.now().isoformat()))
 
 	def sheet2(self,ws, book):
@@ -101,14 +104,14 @@ class FullSeq:
 			
 			col = 'D'
 			for r1, r2 in zip(self.s1, self.s2):
-				s, l, _ = get_Number_of_GPS(book.BP35[i], r1, r2) if len(book.BPxMinor[i])!=0 else (0,0)
+				s, l, _ = book.get_Number_of_GPS(book.BP35[i], r1, r2) if len(book.BPxMinor[i])!=0 else (0,0)
 				ws[col + str(i+3)] = str(round(s/l, 3))+'%' if l is not 0 else '-'
 				col = next_col(col)
 
-			if self.Analyze_type == "Difference_of_Minor":
-				ws['I2'] = "0≤n<2.5"
-				s, l, _ = get_Number_of_GPS(book.BP35[i], 0, 2.5) if len(book.BPxMinor[i])!=0 else (0,0)
-				ws['I' + str(i+3)] = str(round(s/l,3)) + '%' if l is not 0 else '-'
+			# if self.Analyze_type == "Difference_of_Minor":
+			# 	ws['I2'] = "0≤n<2.5"
+			# 	s, l, _ = book.get_Number_of_GPS(book.BP35[i], 0, 2.5) if len(book.BPxMinor[i])!=0 else (0,0)
+			# 	ws['I' + str(i+3)] = str(round(s/l,3)) + '%' if l is not 0 else '-'
 
 		logging.info("{0} End Sheet2".format(datetime.now().isoformat()))
 
@@ -232,7 +235,7 @@ class FullSeq:
 			for c in range(0, book.nsheets):
 				ws[col+str(r+2)] = book.sheet_list[c]
 				# 35 이상 
-				s, l, minor_ = get_Number_of_GPS(book.BP35[c], self.s1[i], self.s2[i])
+				s, l, minor_ = book.get_Number_of_GPS(book.BP35[c], self.s1[i], self.s2[i])
 				maf_ = str(round(s/l, 3)) + '%' if l is not 0 else '-'
 
 				tx_rows = book.BP35[c].loc[ minor_.index ]
@@ -247,7 +250,7 @@ class FullSeq:
 				ws[col+str(nr+1)] = len(tx_orf)
 				ws[col+str(nr+2)] = len(tx_ncr)
 
-				col = self.next_col(col)
+				col = next_col(col)
 
 			# "Average MAF at GPS"
 			ws[col+str(r)] = "Average MAF at GPS"
@@ -257,7 +260,7 @@ class FullSeq:
 				ws[col+str(r+1)] = book.filename
 				ws.merge_cells(start_row=r+1, start_column=4 + book.nsheets, end_row=r+1, end_column=4 + 2 * book.nsheets - 1)
 
-				s, l, minor_ = self.get_Number_of_GPS(book.BP35[c], self.s1[i], self.s2[i])
+				s, l, minor_ = book.get_Number_of_GPS(book.BP35[c], self.s1[i], self.s2[i])
 				maf_ = str(round(s/l, 3)) + '%' if l is not 0 else '-'
 				
 				tx_rows = book.BP35[c].loc[ minor_.index ]
@@ -267,8 +270,8 @@ class FullSeq:
 				self.insert_value_in_cell(ws, book, G_rows, col, book.BP35[c], minor_, maf_,  book.col_GenomeStructure , "MAF")
 				self.insert_value_in_cell(ws, book, R_rows, col, book.BP35[c], minor_, maf_,  book.col_RepeatRegion , "MAF")
 
-				ws[col+str(nr+1)] = str(round((np.divide(tx_orf[["minor"]], book.BP35[c][['sum']].loc[ tx_orf.index]) * 100).sum()[0]/len(tx_orf), 3)) +'%' if len(tx_orf) is not 0 else '-'
-				ws[col+str(nr+2)] = str(round((np.divide(tx_ncr[["minor"]], book.BP35[c][['sum']].loc[ tx_ncr.index]) * 100).sum()[0]/len(tx_ncr), 3)) +'%' if len(tx_ncr) is not 0 else '-'
+				ws[col+str(nr+1)] = str(round((divide(tx_orf[["minor"]], book.BP35[c][['sum']].loc[ tx_orf.index]) * 100).sum()[0]/len(tx_orf), 3)) +'%' if len(tx_orf) is not 0 else '-'
+				ws[col+str(nr+2)] = str(round((divide(tx_ncr[["minor"]], book.BP35[c][['sum']].loc[ tx_ncr.index]) * 100).sum()[0]/len(tx_ncr), 3)) +'%' if len(tx_ncr) is not 0 else '-'
 				
 				col = next_col(col)
 
@@ -365,7 +368,7 @@ class FullSeq:
 			ws.merge_cells(start_row=2, start_column=co, end_row=2, end_column=co+book.nsheets-1)
 			for n in range(0, book.nsheets):
 				ws[col+str(3)] = book.sheet_list[n]
-				_, _, tx_minor = get_Number_of_GPS(book.BP35[n], self.s1[i], self.s2[i])
+				_, _, tx_minor = book.get_Number_of_GPS(book.BP35[n], self.s1[i], self.s2[i])
 				tx_rows = book.BP35[n].loc[ tx_minor.index ]
 
 				g = []
@@ -384,14 +387,14 @@ class FullSeq:
 			ws.merge_cells(start_row=2, start_column=co+book.nsheets, end_row=2, end_column=co+2*book.nsheets-1)
 			for n in range(0, book.nsheets):
 				ws[col+str(3)] = book.sheet_list[n]
-				_, _, tx_minor = get_Number_of_GPS(book.BP35[n], self.s1[i], self.s2[i])
+				_, _, tx_minor = book.get_Number_of_GPS(book.BP35[n], self.s1[i], self.s2[i])
 				tx_rows = book.BP35[n].loc[ tx_minor.index ]
 				for ix in range(0, len(orf_)):
 					mrows = tx_rows[ tx_rows[book.col_ORF] == orf_[ix] ]
 					if len(mrows) is 0:
 						ws[col+str(rows[ix])] = '-'
 					else:
-						maf_ = np.divide(mrows[["minor"]], mrows[["sum"]]) * 100
+						maf_ = divide(mrows[["minor"]], mrows[["sum"]]) * 100
 						val = maf_.sum()[0] / len(maf_)
 						ws[col+str(rows[ix])] = str(round(val, 3)) + '%'
 				col = next_col(col)
@@ -421,7 +424,7 @@ class FullSeq:
 			# get basepair between s1 and s2
 			mxr = []
 			for n in range(0, book.nsheets):
-				_, _, minor_ = get_Number_of_GPS(book.BP35[n], self.s1[i], self.s2[i])
+				_, _, minor_ = book.get_Number_of_GPS(book.BP35[n], self.s1[i], self.s2[i])
 				mxr.append(book.BP35[n].loc[minor_.index])
 
 			for x in range(-1, book.nsheets):
@@ -431,7 +434,7 @@ class FullSeq:
 					for b in range(0, len(book.col_basepair)):
 						if a==b:
 							continue
-						ws[col+str(rows)] = len(mxr[x][np.logical_and( mxr[x]['major_idx']==a, 
+						ws[col+str(rows)] = len(mxr[x][logical_and( mxr[x]['major_idx']==a, 
 							mxr[x]['minor_idx']==b )]) if x != -1 else book.col_basepair[a] + '/' + book.col_basepair[b]
 						rows = rows + 1
 				col = next_col(col)
@@ -468,9 +471,9 @@ class FullSeq:
 
 			for x in range(0, book.nsheets):
 				row = r+x+3
-				s, l, minor_ = get_Number_of_GPS(book.BP35[x], self.s1[i], self.s2[i])
+				s, l, minor_ = book.get_Number_of_GPS(book.BP35[x], self.s1[i], self.s2[i])
 				mxr = book.BP35[x].loc[minor_.index]
-				# s, l = self.get_Number_of_GPS(self.PxMinor[x], self.PxSum[x], self.s1[i], self.s2[i]) if len(self.PxMinor[x])!=0 else (0,0)
+				# s, l = self.book.get_Number_of_GPS(self.PxMinor[x], self.PxSum[x], self.s1[i], self.s2[i]) if len(self.PxMinor[x])!=0 else (0,0)
 				ws["B"+str(row)] = book.sheet_list[x]
 				ws['C'+str(row)] = len(minor_)
 				ws['D'+str(row)] = str(round(s/l, 3)) + '%' if l != 0 else '-'
@@ -482,6 +485,6 @@ class FullSeq:
 							continue
 						else:
 							ws[col+str(r+2)] = book.col_basepair[b].lower()
-							ws[col+str(row)] = len(mxr[np.logical_and( mxr['major_idx']==a, mxr['minor_idx']==b )])
+							ws[col+str(row)] = len(mxr[logical_and( mxr['major_idx']==a, mxr['minor_idx']==b )])
 						col = next_col(col)
 		logging.info("{0} End sheet7".format(datetime.now().isoformat()))

@@ -257,11 +257,9 @@ class Ui_Main_frame(object):
         self.Btn_Box.rejected.connect(Main_frame.reject)
         QtCore.QMetaObject.connectSlotsByName(Main_frame)
 
-        
-
     def retranslateUi(self, Main_frame):
         _translate = QtCore.QCoreApplication.translate
-        Main_frame.setWindowTitle(_translate("Main_frame", "Analyzing Sequence"))
+        Main_frame.setWindowTitle(_translate("Main_frame", "GPA"))
         self.groupBox.setTitle(_translate("Main_frame", "입력 데이터"))
         self.sheetlist_Widget.setSortingEnabled(False)
         __sortingEnabled = self.sheetlist_Widget.isSortingEnabled()
@@ -340,7 +338,6 @@ class Ui_Main_frame(object):
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.exec_()            
 
-
     def replace_(self, L):
         L = L.replace('\n',',').replace(',,',',').replace(',,',',').replace(',,',',').replace(',,',',').strip(',').split(',')
         if L[-1] == '':
@@ -351,59 +348,59 @@ class Ui_Main_frame(object):
 
     def Analyzing(self):
         if self.book.xls is not None:
-        # try:
-            logging.basicConfig(filename='./GPA_log.log',level=logging.DEBUG)
-            
-            for index in range(self.sheetlist_Widget.count()):
-                if self.sheetlist_Widget.item(index).checkState() == QtCore.Qt.Checked:
-                    self.book.sheet_list.append(self.sheetlist_Widget.item(index).text())
-                    
-            self.book.col_DumaPosition = self.DumaPos_Combobox.currentText()
-            self.book.col_DumaSeq = self.Dumaseq_Combobox.currentText()
-            self.book.col_Sequence = self.seq_combobox.currentText()
-            self.book.col_GenomeStructure = self.GenomeST_combobox.currentText()
-            self.book.col_RepeatRegion = self.RepeatReG_combobox.currentText()
-            self.book.col_ORF = self.ORF_combobox.currentText()
+            try:
+                logging.basicConfig(filename='./GPA_log.log',level=logging.DEBUG)
+                
+                for index in range(self.sheetlist_Widget.count()):
+                    if self.sheetlist_Widget.item(index).checkState() == QtCore.Qt.Checked:
+                        self.book.sheet_list.append(self.sheetlist_Widget.item(index).text())
+                        
+                self.book.col_DumaPosition = self.DumaPos_Combobox.currentText()
+                self.book.col_DumaSeq = self.Dumaseq_Combobox.currentText()
+                self.book.col_Sequence = self.seq_combobox.currentText()
+                self.book.col_GenomeStructure = self.GenomeST_combobox.currentText()
+                self.book.col_RepeatRegion = self.RepeatReG_combobox.currentText()
+                self.book.col_ORF = self.ORF_combobox.currentText()
 
-            self.book.GenomeStructure = self.replace_(str(self.Genome_edit.toPlainText()))
-            self.book.RepeatRegion = self.replace_(str(self.Repeat_edit.toPlainText()))
-            self.book.ORF = self.replace_(str(self.ORF_combobox_edit.toPlainText()))
-            self.book.NCR = self.replace_(str(self.NCR_edit.toPlainText()))
-            
-            start_time = time()
-            
-            logging.info("{0} Start Initialization of Data".format(time()))
-            excel = Analyzer(self.book)
-            if self.radio_full.isChecked():
-                Analyze_type = "Full"
-                logging.info("{0} Start Analyzing of full sequence ".format(time()))
-            else:
-                Analyze_type = "Difference_of_Minor"
-                logging.info("{0} Start analyzing of difference_of_Minor Analyzation".format(time()))
+                self.book.GenomeStructure = self.replace_(str(self.Genome_edit.toPlainText()))
+                self.book.RepeatRegion = self.replace_(str(self.Repeat_edit.toPlainText()))
+                self.book.ORF = self.replace_(str(self.ORF_combobox_edit.toPlainText()))
+                self.book.NCR = self.replace_(str(self.NCR_edit.toPlainText()))
+                
+                start_time = time()
+                
+                logging.info("{0} Start Initialization of Data".format(time()))
+                excel = Analyzer(self.book)
+                if self.radio_full.isChecked():
+                    Analyze_type = "Full"
+                    logging.info("{0} Start Analyzing of full sequence ".format(time()))
+                else:
+                    Analyze_type = "Difference_of_Minor"
+                    logging.info("{0} Start analyzing of difference_of_Minor Analyzation".format(time()))
 
-            # Start Analyzing
-            logging.info("{0} Start Analyzation".format(time()))
-            self.Analyze_Dialog(excel.Analyze(Analyze_type, excel.book), start_time)
+                # Start Analyzing
+                logging.info("{0} Start Analyzation".format(time()))
+                self.Analyze_Dialog(excel.Analyze(Analyze_type, excel.book), start_time)
 
-        # except Exception as e:
-        #     logging.error("{0} {1}".format(time(), e))
+            except Exception as e:
+                logging.error("{0} {1}".format(time(), e))
                 
     def Analyze_Dialog(self, Result, start_time):
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Information)   
         msg.setWindowTitle("Info")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        # if Result == "Success":
-        #     msg.setText("Success !")
-        #     msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
-        #     logging.info("{0} Success to finish the analyzation".format(time()))
-        # elif Result == "Error":
-        #     msg.setText("Error!\n컬럼명 일치 여부, 입력 누락, 컬럼 선택 등 기타 주의사항 확인")
-        #     msg.setInformativeText("ls123kr@naver.com 문의")
-        #     logging.error("{0} Etc Error".format(time()))
-        # elif Result == "Permission":
-        #     msg.setText("Permission Error!\n생성하려는 파일과 동일한 이름의 파일이 열려있습니다.")
-        #     logging.error("{0} File Permission Error".format(time()))
+        if Result == "Success":
+            msg.setText("Success !")
+            msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
+            logging.info("{0} Success to finish the analyzation".format(time()))
+        elif Result == "Error":
+            msg.setText("Error!\n컬럼명 일치 여부, 입력 누락, 컬럼 선택 등 기타 주의사항 확인")
+            msg.setInformativeText("ls123kr@naver.com 문의")
+            logging.error("{0} Etc Error".format(time()))
+        elif Result == "Permission":
+            msg.setText("Permission Error!\n생성하려는 파일과 동일한 이름의 파일이 열려있습니다.")
+            logging.error("{0} File Permission Error".format(time()))
         msg.exec_()
 
     def on_change(self):

@@ -1,7 +1,8 @@
-from analyzer import next_col, infolog# book.get_Number_of_GPS, next_col, infolog
-import time, logging
+from analyzer import next_col, infolog, errorlog# book.get_Number_of_GPS, next_col, infolog
+import time
 from datetime import datetime
 from numpy import divide, logical_and, logical_or
+
 class FullSeq:
 	"""
 		analysis of full sequence
@@ -18,19 +19,21 @@ class FullSeq:
 			- minor_ : s1~s2
 			- maf : s / l
 			- types : GPS or MAF
+			리팩토링 필요, GPS 와 maf 한번에 처리
 		"""
+
 		index = book.GenomeStructure if colname == book.col_GenomeStructure else book.RepeatRegion
 	
 		# For Minor Exception
 		if len(BP) == 0:
 			for i in range(0, len(rows)):
 				ws[col+str(rows[i])] = 0 if types == "GPS" else '-'
-			ws[col+str(rows[len(rows)-1] + 1)] = 0 if types == "GPS" else '-'
+			ws[col+str(rows[len(rows)                          -1] + 1)] = 0 if types == "GPS" else '-'
 		else:
 			# merged = self.merge_Genome_Structure(Passage, minor_, sum_, colname)
 			# _, tm_minor = self.get_level_major_minor(minor_, minor_, sum_, s1,s2)
 			mid_rows = BP.loc[ minor_.index ]
-			cnt_sum=0;
+			total_, cnt_sum=0, 0;
 			for i in range(0, len(rows)): # rows[i], index[i]		
 				# 각 index 별로 그룹핑
 				mrows = mid_rows [ mid_rows[ colname ] == index[i] ]
@@ -40,35 +43,39 @@ class FullSeq:
 				elif types == "MAF":
 					if len(mrows) != 0:
 						maf_ = divide(mrows[["minor"]], mrows[["sum"]]) * 100
-						ws[col+str(rows[i])] = str(round(maf_.sum()[0] / len(maf_),3)) + '%'
+						cnt_sum += len(maf_)
+						total_ += maf_.sum()[0]
+						ws[col+str(rows[i])] = str(round(maf_.sum()[0] / len(maf_),3)) + '%' if len(maf_) is not 0 else '-'
 					else:
 						ws[col+str(rows[i])] = '-'
 			if types == "GPS":
 				ws[col+str(rows[len(rows)-1] + 1)] = cnt_sum
 			elif types == "MAF":
 				# s, l = self.book.get_Number_of_GPS(BP, s1, s2)
-				ws[col+str(rows[len(rows)-1] + 1)] = maf
+				ws[col+str(rows[len(rows)-1] + 1)] = str(round(total_ / cnt_sum, 3)) + '%' if cnt_sum is not 0 else '-'
 
 	def sheet1(self,ws, book):
-		logging.info("{0} Start Sheet1".format(datetime.now().isoformat()))
+		infolog("{0} Start Sheet1".format(datetime.now().isoformat()))
+
 		ws.title = "Polymorphic site"
 		ws['A1'] = "strain"
 		ws['C1'] = "Genome length (bp)"
 		ws['D1'] = "Average of MAF"
-		ws['E1'] = "Number of polymorphic site"
+		ws['E1'] = "Range of minor allele frequency(%)"
 		ws.merge_cells(start_row=1, start_column=5, end_row=1, end_column=9)
-		ws['E2'] = "2.5≤n<5"
-		ws['F2'] = "5≤n<15"
-		ws['G2'] = "15≤n<25"
-		ws['H2'] = "25≤n"
-		ws['I2'] = "5≤n"
+		ws['E2'] = "2.5≤f<5"
+		ws['F2'] = "5≤f<15"
+		ws['G2'] = "15≤f<25"
+		ws['H2'] = "25≤f"
+		ws['I2'] = "5≤f"
 		# A col
 		ws.merge_cells(start_row=1, start_column=1, end_row=2, end_column=2)
 		ws.merge_cells(start_row=1, start_column=3, end_row=2, end_column=3)
 		ws.merge_cells(start_row=1, start_column=4, end_row=2, end_column=4)
 		
 		for i in range(book.nsheets):
-			logging.info("{0} Writing {1} sheet".format(time.time(), book.sheet_list[i]))
+			infolog("{0} Writing {1} sheet".format(time.time(), book.sheet_list[i]))
+			
 			ws['A' + str(i+3)] = book.sheet_list[i]
 			ws.merge_cells(start_row=3+i, start_column=1, end_row=3+i, end_column=2)
 			ws['C' + str(i+3)] = book.BPRawLength[i]
@@ -79,15 +86,16 @@ class FullSeq:
 			ws["G" + str(i+3)] = book.get_Number_of_GPS(book.BP35[i], 15.0, 25.0)[1]
 			ws["H" + str(i+3)] = book.get_Number_of_GPS(book.BP35[i], 25.0, 51.0)[1]
 			ws["I" + str(i+3)] = book.get_Number_of_GPS(book.BP35[i], 5.0, 51.0)[1]
-		logging.info("{0} End Sheet1".format(datetime.now().isoformat()))
+		infolog("{0} End Sheet1".format(datetime.now().isoformat()))		
 
 	def sheet2(self,ws, book):
-		logging.info("{0} Start Sheet2".format(datetime.now().isoformat()))
+		infolog("{0} Start Sheet2".format(datetime.now().isoformat()))
+		
 		ws['A1'] = "strain"
 		ws.merge_cells(start_row=1, start_column=1, end_row=2, end_column=2)
 		ws['C1'] = "Genome length (bp)"
 		ws.merge_cells(start_row=1, start_column=3, end_row=2, end_column=3)
-		ws['D1'] = "Average of MAF at GPS"
+		ws['D1'] = "Range of minor allele frequency(%)"
 		ws.merge_cells(start_row=1, start_column=4, end_row=1, end_column=8)
 		ws['D2'] = "2.5≤n<5"
 		ws['E2'] = "5≤n<15"
@@ -96,7 +104,7 @@ class FullSeq:
 		ws['H2'] = "5≤n"	
 
 		for i in range(book.nsheets):
-			logging.info("{0} Writing {1} sheet".format(time.time(), book.sheet_list[i]))
+			infolog("{0} Writing {1} sheet".format(time.time(), book.sheet_list[i]))			
 
 			ws['A' + str(i+3)] = book.sheet_list[i]
 			ws['C' + str(i+3)] = book.BPRawLength[i]
@@ -107,16 +115,11 @@ class FullSeq:
 				s, l, _ = book.get_Number_of_GPS(book.BP35[i], r1, r2) if len(book.BPxMinor[i])!=0 else (0,0)
 				ws[col + str(i+3)] = str(round(s/l, 3))+'%' if l is not 0 else '-'
 				col = next_col(col)
-
-			# if self.Analyze_type == "Difference_of_Minor":
-			# 	ws['I2'] = "0≤n<2.5"
-			# 	s, l, _ = book.get_Number_of_GPS(book.BP35[i], 0, 2.5) if len(book.BPxMinor[i])!=0 else (0,0)
-			# 	ws['I' + str(i+3)] = str(round(s/l,3)) + '%' if l is not 0 else '-'
-
-		logging.info("{0} End Sheet2".format(datetime.now().isoformat()))
+		infolog("{0} End Sheet2".format(datetime.now().isoformat()))		
 
 	def Full_Seq_in_sheet3(self, ws, col, book):
-		logging.info("{0} Start Full_Seq_in_sheet3".format(datetime.now().isoformat()))
+		infolog("{0} Start Full_Seq_in_sheet3".format(datetime.now().isoformat()))
+		
 		# Writing list of GenomeStructure & RepeatRegion, NCR & ORF
 		for r in range(4, 4+len(book.GenomeStructure)):
 			ws[col+str(r)] = book.GenomeStructure[r-4]
@@ -127,12 +130,12 @@ class FullSeq:
 		ws[col+str(5+len(book.GenomeStructure)+len(book.RepeatRegion))] = 'Total'
 
 		rs_ = 5+len(book.GenomeStructure)+len(book.RepeatRegion)
-		ws[col+str(rs_+1)] = 'NCR'
-		ws[col+str(rs_+2)] = 'ORF'
+		ws[col+str(rs_+1)], ws[col+str(rs_+2)] = 'ORF', 'NCR'
 
 		# Writing the count of each sheets
 		col = next_col(col)
 		for i in range(0, book.nsheets):
+			infolog("{0} Writing {1} sheet".format(time.time(), i))
 			ws[col+str(2)] = book.sheet_list[i]
 
 			# 35 이하 포함
@@ -175,13 +178,13 @@ class FullSeq:
 			ws[col+str(rs_+1)] = len(book.BP35[i][ book.BP35[i][ book.col_ORF ].isin(book.ORF)]) if len(book.BP35[i])!=0 else 0
 			ws[col+str(rs_+2)] = len(book.BP35[i][ book.BP35[i][ book.col_ORF ].isin(book.NCR)]) if len(book.BP35[i])!=0 else 0
 			col = next_col(col)
-		logging.info("{0} End Full_Seq_in_sheet3".format(datetime.now().isoformat()))
-
+		infolog("{0} End Full_Seq_in_sheet3".format(datetime.now().isoformat()))
 
 	def sheet3(self,ws, book):
-		logging.info("{0} Start sheet3".format(datetime.now().isoformat()))
+		infolog("{0} Start sheet3".format(datetime.now().isoformat()))
+		
 		for i in range(0, len(self.s1)):
-			logging.info("{0} Writing {1} ~ {2}".format(time.time(), self.s1[i], self.s2[i]))
+			infolog("{0} Writing {1} ~ {2}".format(time.time(), self.s1[i], self.s2[i]))
 
 			# r : (s1,s2)의 범위 별 데이터의 row 변수
 			r = i*(15+len(book.GenomeStructure) + len(book.RepeatRegion))+ 1
@@ -317,15 +320,15 @@ class FullSeq:
 
 			col = next_col(col)
 			ws[col+str(r+3)] = str(self.s1[i]) + "~" + str(self.s2[i]) + "%" if self.s2[i] != 51.0 else str(self.s1[i]) + "% 이상"			
-		logging.info("{0} finished writing GenomeStructure & RepeatRegion".format(datetime.now().isoformat()))
+		infolog("{0} finished writing GenomeStructure & RepeatRegion".format(datetime.now().isoformat()))
 
 		#### Full Sequence				
 		col = next_col(next_col(col))		
 		self.Full_Seq_in_sheet3(ws, col, book)
-		logging.info("{0} End sheet3".format(datetime.now().isoformat()))
+		infolog("{0} End sheet3".format(datetime.now().isoformat()))
 
 	def sheet4_5(self, ws, title, book):
-		logging.info("{0} Start sheet {1}".format(time.time(), 4 if title is "ORF" else 5))
+		infolog("{0} Start sheet {1}".format(time.time(), 4 if title is "ORF" else 5))
 		ws['B2'] = book.filename
 		ws["C2"] = "(BP_full)Length"
 		ws.merge_cells(start_row=2, start_column=3, end_row=2, end_column=3+book.nsheets-1)
@@ -379,6 +382,7 @@ class FullSeq:
 					cnt_ += len(mrows)
 					g.append(len(mrows))
 				ws[col+str(len(orf_) + 4)] = cnt_
+				g.append(cnt_)
 				gps.append(g)
 				col = next_col(col)
 
@@ -386,6 +390,7 @@ class FullSeq:
 			ws[col+str(2)] = "Average MAF at GPS"
 			ws.merge_cells(start_row=2, start_column=co+book.nsheets, end_row=2, end_column=co+2*book.nsheets-1)
 			for n in range(0, book.nsheets):
+				val, cnt_ = 0, 0
 				ws[col+str(3)] = book.sheet_list[n]
 				_, _, tx_minor = book.get_Number_of_GPS(book.BP35[n], self.s1[i], self.s2[i])
 				tx_rows = book.BP35[n].loc[ tx_minor.index ]
@@ -395,8 +400,11 @@ class FullSeq:
 						ws[col+str(rows[ix])] = '-'
 					else:
 						maf_ = divide(mrows[["minor"]], mrows[["sum"]]) * 100
-						val = maf_.sum()[0] / len(maf_)
-						ws[col+str(rows[ix])] = str(round(val, 3)) + '%'
+						val += maf_.sum()[0]
+						cnt += len(maf_)
+						ws[col+str(rows[ix])] = str(round(maf_.sum()[0] / len(maf_), 3)) + '%'
+				# total
+				ws[col+str(len(orf_)+4)] = str(round(val / cnt, 3)) + '%' if cnt is not 0 else '-'
 				col = next_col(col)
 
 			# "Number of GPS / Length" of each sheets
@@ -408,15 +416,19 @@ class FullSeq:
 				for ix in range(0, len(orf_)):
 					l_ = int(str(ws[ncol+str(rows[ix])].value))
 					ws[col+str(rows[ix])] = gps[n][ix] / l_ if l_ is not 0 else '-'
+				# total
+				l_ = int(str(ws[ncol+str(len(orf_)+4)].value))
+				ws[col+str(len(orf_)+4)] = gps[n][-1] / l_ if l_ is not 0 else '-'
+
 				ncol = next_col(ncol)
 				col = next_col(col)
 
 			# end for s1
 			col = next_col(col)
-		logging.info("{0} End sheet {1}".format(time.time(), 4 if title is "ORF" else 5))
+		infolog("{0} End sheet {1}".format(time.time(), 4 if title is "ORF" else 5))
 
 	def sheet6(self,ws, book):
-		logging.info("{0} Start sheet6".format(datetime.now().isoformat()))
+		infolog("{0} Start sheet6".format(datetime.now().isoformat()))
 		col = 'B'
 		for i in range(0, len(self.s1)):
 			ws[col+'2'] = str(self.s1[i]) + '~' + str(self.s2[i]) +'%' if self.s2[i] != 51.0 else str(self.s1[i]) + '%~'
@@ -439,10 +451,10 @@ class FullSeq:
 						rows = rows + 1
 				col = next_col(col)
 			col = next_col(col)
-		logging.info("{0} End sheet6".format(datetime.now().isoformat()))
+		infolog("{0} End sheet6".format(datetime.now().isoformat()))
 
 	def sheet7(self, ws, book):
-		logging.info("{0} Start sheet7".format(datetime.now().isoformat()))
+		infolog("{0} Start sheet7".format(datetime.now().isoformat()))
 		for i in range(0, len(self.s1)):
 			r = i * (book.nsheets + 5) + 2
 			ws["A"+str(r)] = str(self.s1[i]) + "~" + str(self.s2[i]) + "%" if self.s2[i] != 51.0 else str(self.s1[i]) + "%~"
@@ -487,4 +499,4 @@ class FullSeq:
 							ws[col+str(r+2)] = book.col_basepair[b].lower()
 							ws[col+str(row)] = len(mxr[logical_and( mxr['major_idx']==a, mxr['minor_idx']==b )])
 						col = next_col(col)
-		logging.info("{0} End sheet7".format(datetime.now().isoformat()))
+		infolog("{0} End sheet7".format(datetime.now().isoformat()))

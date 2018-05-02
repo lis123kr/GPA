@@ -21,7 +21,6 @@ class FullSeq:
 			- types : GPS or MAF
 			리팩토링 필요, GPS 와 maf 한번에 처리
 		"""
-
 		index = book.GenomeStructure if colname == book.col_GenomeStructure else book.RepeatRegion
 	
 		# For Minor Exception
@@ -55,7 +54,7 @@ class FullSeq:
 				ws[col+str(rows[len(rows)-1] + 1)] = str(round(total_ / cnt_sum, 3)) + '%' if cnt_sum is not 0 else '-'
 
 	def sheet1(self,ws, book):
-		infolog("{0} Start Sheet1".format(datetime.now().isoformat()))
+		infolog("Start Sheet1")
 
 		ws.title = "Polymorphic site"
 		ws['A1'] = "strain"
@@ -86,10 +85,11 @@ class FullSeq:
 			ws["G" + str(i+3)] = book.get_Number_of_GPS(book.BP35[i], 15.0, 25.0)[1]
 			ws["H" + str(i+3)] = book.get_Number_of_GPS(book.BP35[i], 25.0, 51.0)[1]
 			ws["I" + str(i+3)] = book.get_Number_of_GPS(book.BP35[i], 5.0, 51.0)[1]
-		infolog("{0} End Sheet1".format(datetime.now().isoformat()))		
+
+		infolog("End Sheet1")		
 
 	def sheet2(self,ws, book):
-		infolog("{0} Start Sheet2".format(datetime.now().isoformat()))
+		infolog("Start Sheet2")
 		
 		ws['A1'] = "strain"
 		ws.merge_cells(start_row=1, start_column=1, end_row=2, end_column=2)
@@ -104,7 +104,7 @@ class FullSeq:
 		ws['H2'] = "5≤n"	
 
 		for i in range(book.nsheets):
-			infolog("{0} Writing {1} sheet".format(time.time(), book.sheet_list[i]))			
+			infolog("Writing {1} sheet".format(book.sheet_list[i]))			
 
 			ws['A' + str(i+3)] = book.sheet_list[i]
 			ws['C' + str(i+3)] = book.BPRawLength[i]
@@ -115,10 +115,10 @@ class FullSeq:
 				s, l, _ = book.get_Number_of_GPS(book.BP35[i], r1, r2) if len(book.BPxMinor[i])!=0 else (0,0)
 				ws[col + str(i+3)] = str(round(s/l, 3))+'%' if l is not 0 else '-'
 				col = next_col(col)
-		infolog("{0} End Sheet2".format(datetime.now().isoformat()))		
+		infolog("End Sheet2")		
 
 	def Full_Seq_in_sheet3(self, ws, col, book):
-		infolog("{0} Start Full_Seq_in_sheet3".format(datetime.now().isoformat()))
+		infolog("Start Full_Seq_in_sheet3")
 		
 		# Writing list of GenomeStructure & RepeatRegion, NCR & ORF
 		for r in range(4, 4+len(book.GenomeStructure)):
@@ -178,13 +178,13 @@ class FullSeq:
 			ws[col+str(rs_+1)] = len(book.BP35[i][ book.BP35[i][ book.col_ORF ].isin(book.ORF)]) if len(book.BP35[i])!=0 else 0
 			ws[col+str(rs_+2)] = len(book.BP35[i][ book.BP35[i][ book.col_ORF ].isin(book.NCR)]) if len(book.BP35[i])!=0 else 0
 			col = next_col(col)
-		infolog("{0} End Full_Seq_in_sheet3".format(datetime.now().isoformat()))
+		infolog("End Full_Seq_in_sheet3")
 
 	def sheet3(self,ws, book):
-		infolog("{0} Start sheet3".format(datetime.now().isoformat()))
+		infolog("Start sheet3")
 		
 		for i in range(0, len(self.s1)):
-			infolog("{0} Writing {1} ~ {2}".format(time.time(), self.s1[i], self.s2[i]))
+			infolog("Writing {1} ~ {2}".format(self.s1[i], self.s2[i]))
 
 			# r : (s1,s2)의 범위 별 데이터의 row 변수
 			r = i*(15+len(book.GenomeStructure) + len(book.RepeatRegion))+ 1
@@ -320,15 +320,15 @@ class FullSeq:
 
 			col = next_col(col)
 			ws[col+str(r+3)] = str(self.s1[i]) + "~" + str(self.s2[i]) + "%" if self.s2[i] != 51.0 else str(self.s1[i]) + "% 이상"			
-		infolog("{0} finished writing GenomeStructure & RepeatRegion".format(datetime.now().isoformat()))
+		infolog("finished writing GenomeStructure & RepeatRegion")
 
 		#### Full Sequence				
 		col = next_col(next_col(col))		
 		self.Full_Seq_in_sheet3(ws, col, book)
-		infolog("{0} End sheet3".format(datetime.now().isoformat()))
+		infolog("End sheet3")
 
 	def sheet4_5(self, ws, title, book):
-		infolog("{0} Start sheet {1}".format(time.time(), 4 if title is "ORF" else 5))
+		infolog("Start sheet {1}".format(4 if title is "ORF" else 5))
 		ws['B2'] = book.filename
 		ws["C2"] = "(BP_full)Length"
 		ws.merge_cells(start_row=2, start_column=3, end_row=2, end_column=3+book.nsheets-1)
@@ -401,10 +401,10 @@ class FullSeq:
 					else:
 						maf_ = divide(mrows[["minor"]], mrows[["sum"]]) * 100
 						val += maf_.sum()[0]
-						cnt += len(maf_)
+						cnt_ += len(maf_)
 						ws[col+str(rows[ix])] = str(round(maf_.sum()[0] / len(maf_), 3)) + '%'
 				# total
-				ws[col+str(len(orf_)+4)] = str(round(val / cnt, 3)) + '%' if cnt is not 0 else '-'
+				ws[col+str(len(orf_)+4)] = str(round(val / cnt_, 3)) + '%' if cnt_ is not 0 else '-'
 				col = next_col(col)
 
 			# "Number of GPS / Length" of each sheets
@@ -425,10 +425,10 @@ class FullSeq:
 
 			# end for s1
 			col = next_col(col)
-		infolog("{0} End sheet {1}".format(time.time(), 4 if title is "ORF" else 5))
+		infolog("End sheet {1}".format( 4 if title is "ORF" else 5))
 
 	def sheet6(self,ws, book):
-		infolog("{0} Start sheet6".format(datetime.now().isoformat()))
+		infolog("Start sheet6")
 		col = 'B'
 		for i in range(0, len(self.s1)):
 			ws[col+'2'] = str(self.s1[i]) + '~' + str(self.s2[i]) +'%' if self.s2[i] != 51.0 else str(self.s1[i]) + '%~'
@@ -451,12 +451,12 @@ class FullSeq:
 						rows = rows + 1
 				col = next_col(col)
 			col = next_col(col)
-		infolog("{0} End sheet6".format(datetime.now().isoformat()))
+		infolog("End sheet6")
 
 	def sheet7(self, ws, book):
-		infolog("{0} Start sheet7".format(datetime.now().isoformat()))
+		infolog("Start sheet7")
 		for i in range(0, len(self.s1)):
-			r = i * (book.nsheets + 5) + 2
+			r = i * (book.nsheets + 12) + 2
 			ws["A"+str(r)] = str(self.s1[i]) + "~" + str(self.s2[i]) + "%" if self.s2[i] != 51.0 else str(self.s1[i]) + "%~"
 			
 			ws["B"+str(r)] = "Virus"
@@ -479,17 +479,18 @@ class FullSeq:
 			ws['L'+str(r)] = 'C'
 			ws.merge_cells(start_row=r, start_column=12, end_row=r+1, end_column=14)
 			ws['O'+str(r)] = 'T'
-			ws.merge_cells(start_row=r, start_column=15, end_row=r+1, end_column=17)
+			ws.merge_cells(start_row=r, start_column=15, end_row=r+1, end_column=17)	
 
+			ws['E'+str(r+3+book.nsheets)] = 'sum'
 			for x in range(0, book.nsheets):
-				row = r+x+3
+				row, mafrow = r+x+3, r+book.nsheets+x+5
 				s, l, minor_ = book.get_Number_of_GPS(book.BP35[x], self.s1[i], self.s2[i])
 				mxr = book.BP35[x].loc[minor_.index]
 				# s, l = self.book.get_Number_of_GPS(self.PxMinor[x], self.PxSum[x], self.s1[i], self.s2[i]) if len(self.PxMinor[x])!=0 else (0,0)
 				ws["B"+str(row)] = book.sheet_list[x]
 				ws['C'+str(row)] = len(minor_)
 				ws['D'+str(row)] = str(round(s/l, 3)) + '%' if l != 0 else '-'
-					
+				
 				col = 'F'
 				for a in range(0, 4):
 					for b in range(0, 4):
@@ -497,6 +498,38 @@ class FullSeq:
 							continue
 						else:
 							ws[col+str(r+2)] = book.col_basepair[b].lower()
-							ws[col+str(row)] = len(mxr[logical_and( mxr['major_idx']==a, mxr['minor_idx']==b )])
+							ext_ = mxr[logical_and( mxr['major_idx']==a, mxr['minor_idx']==b )]
+
+							ws[col+str(row)] = len(ext_)
+
+							if len(ext_) is not 0:
+								maf_ =  (divide( ext_[['minor']], ext_[['sum']]) * 100).sum()[0] / len(ext_)
+								ws[col+str(mafrow)] = str(round( maf_ , 3)) + '%'
+							else:
+								ws[col+str(mafrow)] = 'N/A'
+
+							# total sum
+							if ws[col+str(r+3+book.nsheets)].value == None:							
+								ws[col+str(r+3+book.nsheets)] =  len(ext_)
+							else:
+								ws[col+str(r+3+book.nsheets)].value += len(ext_)
+
+							if ws[col+str(r+5+ 2*book.nsheets)].value == None:
+								ws[col+str(r+5+ 2*book.nsheets)] = ext_[['minor']].sum()[0]
+								ws[col+str(r+5+ 2*book.nsheets+1)] = ext_[['sum']].sum()[0]
+							else:
+								print(i, "mj ", a, "mn ", b, ext_[['minor']].sum()[0])
+								ws[col+str(r+5+ 2*book.nsheets)].value += ext_[['minor']].sum()[0]
+								ws[col+str(r+5+ 2*book.nsheets+1)].value += ext_[['sum']].sum()[0]
+
+
 						col = next_col(col)
-		infolog("{0} End sheet7".format(datetime.now().isoformat()))
+			# total maf
+			col = 'F'
+			numrow, mnrow = r+3+book.nsheets, r+5+2*book.nsheets
+			for c in range(0, 12):
+				ws[col+str(mnrow)] = str(round( float(ws[col+str(mnrow)].value) / float(ws[col+str(mnrow+1)].value) * 100, 3))+'%' if ws[col+str(numrow)].value != 0 else 'N/A'
+				ws[col+str(mnrow+1)].value = None
+				col = next_col(col)
+
+		infolog("End sheet7")

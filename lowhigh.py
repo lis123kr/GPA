@@ -186,20 +186,28 @@ class LowHigh:
 
 		orfncr = book.ORF if title is 'ORF' else book.NCR
 		col_diff = "diffofinc" if types_ == 'INC' else "diffofdec"
-
-		sum_ = 0
-		for r in range(len(orfncr)):
-			ws['A'+str(r+3)] = orfncr[r]
-			cnt = len(book.Dumas[ book.Dumas[book.col_ORF] == orfncr[r] ])
-			ws['B'+str(r+3)] = cnt
-			sum_ += cnt
-
-		ws['A'+str(3+len(orfncr))] = 'Total'
-		ws['B'+str(3+len(orfncr))] = sum_
-
 		bp = self.BPmergedinc if types_ == 'INC' else self.BPmergeddec
 
-		col = 'D'
+		sum_, col = 0, 'B'
+		for si in range(-1, book.nsheets):
+			sum_ = 0
+			if si != -1:
+				ws[col+'2'] = book.sheet_list[si] 
+			for r in range(len(orfncr)):
+				if si == -1:
+					ws['A'+str(r+3)] = orfncr[r]
+					cnt = len(book.Dumas[ book.Dumas[book.col_ORF] == orfncr[r] ])
+					ws[col+str(r+3)] = cnt
+					sum_ += cnt
+				else:
+					cnt = len( bp[si][ bp[si][book.col_ORF] == orfncr[r] ] )
+					ws[col+str(r+3)] = cnt
+					sum_ += cnt
+			ws[col+str(3+len(orfncr))] = sum_
+			col = next_col(col)
+		ws['A'+str(3+len(orfncr))] = 'Total'
+
+		col = next_col(col)
 		for i in range(len(self.s1)):			
 			# ORF or CNR 종류
 			ws[col+'1'] = str(self.s1[i])+'~'+str(self.s2[i]) if self.s2[i]!=51.0 else str(self.s1[i])+'~'
@@ -250,7 +258,7 @@ class LowHigh:
 			major가 같은 것, minor도 같은 것만 추출
 			minor x -> 증가 포함
 			1. major_idx_x == major_idx_y - 치환 제거
-			2. (minor_idx_x == minor_idx_y) or ((minor_idx_x != minor_idx_y) and minor_x > 0)
+			2. (minor_idx_x == minor_idx_y) or ((minor_idx_x != minor_idx_y) and minor_x == 0)
 		"""
 		infolog("lowhigh BaseComp start")
 		ws.merge_cells(start_row=1, start_column=1, end_row=2, end_column=1)
@@ -286,3 +294,18 @@ class LowHigh:
 				col = next_col(col)
 
 		infolog("lowhigh BaseComp end")
+
+	def listofdata(self, ws, n_, types_, book):
+		print(types_)
+		# infolog("writing list of {1} data".format(str(types_)))
+		# module import error
+		from openpyxl.utils.dataframe import dataframe_to_rows
+		bp = self.BPmergedinc[n_] if types_ is "INC" else self.BPmergeddec[n_]
+		rows = dataframe(bp)
+
+
+		for r_idx, row in enumerate(rows, 1):
+			for c_idx, value in enumerate(row, 1):
+				ws.cell(row=r_idx, column=c_idx, value=value)
+
+		# infolog("writing list of {1} data End".format(types_))

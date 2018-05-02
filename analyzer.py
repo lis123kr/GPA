@@ -10,6 +10,7 @@ def infolog(message):
 
 def errorlog(message):
 	error("{0} {1}".format(datetime.now().isoformat(), message))	
+	print("{0} {1}".format(datetime.now().isoformat(), message))
 
 def next_col(asc):
 	asc2 = list(asc)
@@ -114,6 +115,11 @@ class Analyzer(object):
 				lh.ORFNCR(ws4, types_[i], "ORF", book)
 				lh.ORFNCR(ws5, types_[i], "NCR", book)
 				lh.BaseComp(ws6, types_[i], book)
+
+				for n_ in range(book.nsheets):
+					ws = wb.create_sheet(book.sheet_list[n_])
+					lh.listofdata(ws, n_, types_[i], book)
+
 				wb.save("["+types_[i]+"분석]" + book.filename + '.xlsx')
 		else: # full
 			from fullseq import FullSeq

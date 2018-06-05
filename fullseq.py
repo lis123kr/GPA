@@ -104,7 +104,7 @@ class FullSeq:
 		ws['H2'] = "5≤n"	
 
 		for i in range(book.nsheets):
-			infolog("Writing {1} sheet".format(book.sheet_list[i]))			
+			infolog("Writing {0} sheet".format(book.sheet_list[i]))			
 
 			ws['A' + str(i+3)] = book.sheet_list[i]
 			ws['C' + str(i+3)] = book.BPRawLength[i]
@@ -184,7 +184,7 @@ class FullSeq:
 		infolog("Start sheet3")
 		
 		for i in range(0, len(self.s1)):
-			infolog("Writing {1} ~ {2}".format(self.s1[i], self.s2[i]))
+			infolog("Writing {0} ~ {1}".format(self.s1[i], self.s2[i]))
 
 			# r : (s1,s2)의 범위 별 데이터의 row 변수
 			r = i*(15+len(book.GenomeStructure) + len(book.RepeatRegion))+ 1
@@ -328,7 +328,7 @@ class FullSeq:
 		infolog("End sheet3")
 
 	def sheet4_5(self, ws, title, book):
-		infolog("Start sheet {1}".format(4 if title is "ORF" else 5))
+		infolog("Start sheet {0}".format(4 if title is "ORF" else 5))
 		ws['B2'] = book.filename
 		ws["C2"] = "(BP_full)Length"
 		ws.merge_cells(start_row=2, start_column=3, end_row=2, end_column=3+book.nsheets-1)
@@ -425,7 +425,7 @@ class FullSeq:
 
 			# end for s1
 			col = next_col(col)
-		infolog("End sheet {1}".format( 4 if title is "ORF" else 5))
+		infolog("End sheet {0}".format( 4 if title is "ORF" else 5))
 
 	def sheet6(self,ws, book):
 		infolog("Start sheet6")
@@ -518,7 +518,7 @@ class FullSeq:
 								ws[col+str(r+5+ 2*book.nsheets)] = ext_[['minor']].sum()[0]
 								ws[col+str(r+5+ 2*book.nsheets+1)] = ext_[['sum']].sum()[0]
 							else:
-								print(i, "mj ", a, "mn ", b, ext_[['minor']].sum()[0])
+								# print(i, "mj ", a, "mn ", b, ext_[['minor']].sum()[0])
 								ws[col+str(r+5+ 2*book.nsheets)].value += ext_[['minor']].sum()[0]
 								ws[col+str(r+5+ 2*book.nsheets+1)].value += ext_[['sum']].sum()[0]
 

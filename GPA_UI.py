@@ -354,6 +354,7 @@ class Ui_Main_frame(object):
             for index in range(self.sheetlist_Widget.count()):
                 if self.sheetlist_Widget.item(index).checkState() == QtCore.Qt.Checked:
                     self.book.sheet_list.append(self.sheetlist_Widget.item(index).text())
+                    self.book.sheets.append(self.sheets[index])
                     
             self.book.col_DumaPosition = self.DumaPos_Combobox.currentText()
             self.book.col_DumaSeq = self.Dumaseq_Combobox.currentText()

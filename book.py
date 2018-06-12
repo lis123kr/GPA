@@ -2,54 +2,57 @@ class Book:
 	"""
 		Contents of a "Excel file" 
 	"""
+	def __init__(self):
+		self.xls = None
 
-	xls = None
+		self.filename = None
 
-	filename = None
+		self.nsheets = 0
 
-	nsheets = 0
+		self.constraints = 35.0
 
-	constraints = 35.0
+		self.sheet_list = []
 
-	sheet_list = []
+		self.sheets = []
+		# Columns name
+		self.col_DumaPosition = None
 
-	# Columns name
-	col_DumaPosition = None
+		self.col_DumaSeq = None
 
-	col_DumaSeq = None
+		self.col_Sequence = None
 
-	col_Sequence = None
+		self.col_GenomeStructure = None
 
-	col_GenomeStructure = None
+		self.col_RepeatRegion = None
 
-	col_RepeatRegion = None
+		self.col_ORF = None
 
-	col_ORF = None
+		self.col_Position = None
 
-	col_basepair = ["A","G","C","T"]
-	# data list of each columns
-	GenomeStructure = []
-	
-	RepeatRegion = []
+		self.col_basepair = ["A","G","C","T"]
+		# data list of each columns
+		self.GenomeStructure = []
+		
+		self.RepeatRegion = []
 
-	ORF = []
+		self.ORF = []
 
-	NCR = []
+		self.NCR = []
 
-	# variables for preprocessing & analyzing
-	BPRaw = []
+		# variables for preprocessing & analyzing
+		self.BPRaw = []
 
-	BPRawLength = []
+		self.BPRawLength = []
 
-	BP35 = []
+		self.BP35 = []
 
-	BPxMajor = []
-	
-	BPxMinor = []
+		self.BPxMajor = []
+		
+		self.BPxMinor = []
 
-	P0 = None
+		self.P0 = None
 
-	Dumas = None
+		self.Dumas = None
 	
 	def type_check(self, L):
 		for i in range(0,len(L)):
@@ -97,16 +100,18 @@ class Book:
 		for bp in self.BP35:
 			argx = -bp[self.col_basepair] 	# A, G, C, T의 순으로 우선순위를 위해 음수로 정렬
 			bps = argx.values.argsort(axis=1)
-			bp['minor_idx'] = DataFrame(bps[:,1], index=[bp.index])
-			bp['major_idx'] = DataFrame(bps[:,0], index=[bp.index])
+			bp['minor_idx'] = DataFrame(bps[:,1], index=bp.index)
+			bp['major_idx'] = DataFrame(bps[:,0], index=bp.index)
 		infolog("preprocessing end")
 
 	def mergesequence(self):
 		from analyzer import infolog
 		from pandas import merge
 		infolog("mergesequence start")
-		for x in self.sheet_list:
-			sheet = self.xls.parse(x)
+		# print(type(self.sheet_list), len(self.sheet_list))
+		for sheet in self.sheets:
+			# sheet = self.xls.parse(x)
+			print(type(sheet))
 			if self.P0 is None:
 				self.P0 = sheet
 			else:
@@ -143,3 +148,66 @@ class Book:
 		idx = logical_and(maf_>=s1, maf_<s2)
 		idx = idx.values.tolist()
 		return maf_[idx].sum()[0], len(BP[idx]), BP[['minor']][idx]
+
+	def save_data(self, book, filename):
+		import pickle as pk
+		params = {}
+		params['filename'] = book.filename
+		params['nsheets'] = book.nsheets
+		params['constraints'] = book.constraints
+		params['sheet_list'] = book.sheet_list
+		params['sheets'] = book.sheets
+		params['col_DumaPosition'] = book.col_DumaPosition
+		params['col_DumaSeq'] = book.col_DumaSeq
+		params['col_Sequence'] = book.col_Sequence
+		params['col_GenomeStructure'] = book.col_GenomeStructure
+		params['col_RepeatRegion'] = book.col_RepeatRegion
+		params['col_ORF'] = book.col_ORF
+		params['col_Position'] = book.col_Position
+		params['col_basepair'] = book.col_basepair
+		params['GenomeStructure'] = book.GenomeStructure
+		params['RepeatRegion'] = book.RepeatRegion
+		params['ORF'] = book.ORF
+		params['NCR'] = book.NCR
+		params['BPRaw'] = book.BPRaw
+		params['BPRawLength'] = book.BPRawLength
+		params['BP35'] = book.BP35
+		params['BPxMajor'] = book.BPxMajor
+		params['BPxMinor'] = book.BPxMinor
+		params['P0'] = book.P0
+		params['Dumas'] = book.Dumas
+		with open(filename, 'wb') as f:
+			pk.dump(params, f)
+
+	@staticmethod
+	def load_data(filename):
+		import pickle as pk
+		params = None
+		with open(filename, 'rb') as f:
+			params = pk.load(f)
+		book = Book()
+		book.filename = params['filename']
+		book.nsheets = params['nsheets']
+		book.constraints = params['constraints']
+		book.sheet_list = params['sheet_list']
+		book.sheets = params['sheets']
+		book.col_DumaPosition = params['col_DumaPosition']
+		book.col_DumaSeq = params['col_DumaSeq']
+		book.col_Sequence = params['col_Sequence']
+		book.col_GenomeStructure = params['col_GenomeStructure']
+		book.col_RepeatRegion = params['col_RepeatRegion']
+		book.col_ORF = params['col_ORF']
+		book.col_Position = params['col_Position']
+		book.col_basepair = params['col_basepair']
+		book.GenomeStructure = params['GenomeStructure']
+		book.RepeatRegion = params['RepeatRegion']
+		book.ORF = params['ORF']
+		book.NCR = params['NCR']
+		book.BPRaw = params['BPRaw']
+		book.BPRawLength = params['BPRawLength']
+		book.BP35 = params['BP35']
+		book.BPxMajor = params['BPxMajor']
+		book.BPxMinor = params['BPxMinor']
+		book.P0 = params['P0']
+		book.Dumas = params['Dumas']
+		return book

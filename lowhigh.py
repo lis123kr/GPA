@@ -39,8 +39,7 @@ class LowHigh:
 				y1 = book.BP35[j][ book.BP35[j][book.col_DumaPosition].isin(dumaspos[book.col_DumaPosition].values.tolist())]	if len(dumaspos) is not 0 else pd.DataFrame()
 
 				merged = pd.merge(x1,y1, how='outer', on=self.dumascol, suffixes=('_x', '_y'), right_index=True, left_index=True)
-				print("x1, y1", len(x1), len(y1))
-				print("merged2 ", len(merged))
+				
 				if(len(x1) is 0 or len(y1) is 0):
 					self.BPmergedinc.append(pd.DataFrame())
 					self.BPmergeddec.append(pd.DataFrame())
@@ -59,7 +58,7 @@ class LowHigh:
 				cond2 = merged['diffofinc'] >= 5.0
 				cond3 = merged['diffofdec'] >= 5.0
 				
-				
+
 				# 한쪽에 값이 없으면 drop되기 때문에 어디쪽에 해도 상관은 없음	
 				# github 가져오기			
 				self.BPmergedinc.append(pd.DataFrame.dropna(merged[ logical_and(cond1, cond2).values ], how='all'))

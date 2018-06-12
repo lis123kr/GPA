@@ -10,6 +10,36 @@ class FullSeq:
 	def __init__(self, book):	
 		self.s1 = [ 2.5, 5, 15, 25, 5]
 		self.s2 = [ 5, 15, 25, 51.0, 51.0]	
+
+	def maf5list(self, ws, book):
+		from analyzer import dataframe_to_rows
+		from pandas import merge
+		infolog("writing list of data")
+		P0, merged = None, None
+		dumascol = [book.col_GenomeStructure, book.col_RepeatRegion, book.col_ORF, book.col_DumaPosition, book.col_DumaSeq]
+		for i in range(book.nsheets):
+			book.BP35[i]['maf'] = divide(book.BP35[i][['minor']], book.BP35[i][['sum']]) * 100
+			if merged is not None:
+				merged = merge(merged, book.BP35[i][ book.BP35[i]['maf']>=5.0], on=dumascol, how='outer', right_index=True, left_index=True)
+			else:
+				merged = book.BP35[i][ book.BP35[i]['maf']>= 5.0 ]
+		merged = merged[book.col_DumaPosition].values.tolist()
+		for i in range(book.nsheets):
+			if P0 is not None:
+				P0 = merge(P0, book.BP35[i][ book.BP35[i][book.col_DumaPosition].isin(merged) ], on=dumascol, how='outer',
+					left_index=True, right_index=True)
+			else:
+				P0 = book.BP35[i][ book.BP35[i][book.col_DumaPosition].isin(merged) ]
+
+		P0.to_excel('a.xlsx')
+		# bp = bp[ self.dumascol + []]
+		rows = dataframe_to_rows(P0, index=False)
+
+		for r_idx, row in enumerate(rows, 1):
+			for c_idx, value in enumerate(row, 1):
+				if str(value) != 'nan':
+					ws.cell(row=r_idx, column=c_idx, value=value)
+
 		
 	def insert_value_in_cell(self,ws, book, rows, col, BP, minor_, maf, colname, types):
 		"""
@@ -104,7 +134,7 @@ class FullSeq:
 		ws['H2'] = "5≤n"	
 
 		for i in range(book.nsheets):
-			infolog("Writing {1} sheet".format(book.sheet_list[i]))			
+			infolog("Writing {0} sheet".format(book.sheet_list[i]))			
 
 			ws['A' + str(i+3)] = book.sheet_list[i]
 			ws['C' + str(i+3)] = book.BPRawLength[i]
@@ -184,7 +214,7 @@ class FullSeq:
 		infolog("Start sheet3")
 		
 		for i in range(0, len(self.s1)):
-			infolog("Writing {1} ~ {2}".format(self.s1[i], self.s2[i]))
+			infolog("Writing {0} ~ {1}".format(self.s1[i], self.s2[i]))
 
 			# r : (s1,s2)의 범위 별 데이터의 row 변수
 			r = i*(15+len(book.GenomeStructure) + len(book.RepeatRegion))+ 1
@@ -328,7 +358,7 @@ class FullSeq:
 		infolog("End sheet3")
 
 	def sheet4_5(self, ws, title, book):
-		infolog("Start sheet {1}".format(4 if title is "ORF" else 5))
+		infolog("Start sheet {0}".format(4 if title is "ORF" else 5))
 		ws['B2'] = book.filename
 		ws["C2"] = "(BP_full)Length"
 		ws.merge_cells(start_row=2, start_column=3, end_row=2, end_column=3+book.nsheets-1)
@@ -425,7 +455,7 @@ class FullSeq:
 
 			# end for s1
 			col = next_col(col)
-		infolog("End sheet {1}".format( 4 if title is "ORF" else 5))
+		infolog("End sheet {0}".format( 4 if title is "ORF" else 5))
 
 	def sheet6(self,ws, book):
 		infolog("Start sheet6")
@@ -518,7 +548,7 @@ class FullSeq:
 								ws[col+str(r+5+ 2*book.nsheets)] = ext_[['minor']].sum()[0]
 								ws[col+str(r+5+ 2*book.nsheets+1)] = ext_[['sum']].sum()[0]
 							else:
-								print(i, "mj ", a, "mn ", b, ext_[['minor']].sum()[0])
+								# print(i, "mj ", a, "mn ", b, ext_[['minor']].sum()[0])
 								ws[col+str(r+5+ 2*book.nsheets)].value += ext_[['minor']].sum()[0]
 								ws[col+str(r+5+ 2*book.nsheets+1)].value += ext_[['sum']].sum()[0]
 

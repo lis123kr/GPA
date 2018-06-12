@@ -16,7 +16,7 @@ class LowHigh:
 		infolog("lowhigh init start")
 		sheet_names = []
 		BPmaf = []
-		dumascol = [book.col_GenomeStructure, book.col_RepeatRegion, book.col_ORF, book.col_DumaPosition, book.col_DumaSeq]
+		self.dumascol = [book.col_GenomeStructure, book.col_RepeatRegion, book.col_ORF, book.col_DumaPosition, book.col_DumaSeq]
 		for bp in book.BP35:
 			#get maf 5%
 			s, l, minor_ = book.get_Number_of_GPS(bp, 5.0, 51.0)
@@ -32,13 +32,13 @@ class LowHigh:
 				sheet_names.append(book.sheet_list[i]+'->'+book.sheet_list[j])
 				# low의 maf5%이상과 high의 maf5%이상 값을 병합
 				# 둘 중 하나라도 sum >= 35.0 and maf 5% 이상인 값에서 분석을 진행
-				dumaspos = pd.merge(x,y, how='outer', on=dumascol, suffixes=('_x', '_y'), right_index=True, left_index=True)[[book.col_DumaPosition]]
+				dumaspos = pd.merge(x,y, how='outer', on=self.dumascol, suffixes=('_x', '_y'), right_index=True, left_index=True)[[book.col_DumaPosition]]
 
 				# dumas position 기준으로 양쪽 위치 추출
 				x1 = book.BP35[i][ book.BP35[i][book.col_DumaPosition].isin(dumaspos[book.col_DumaPosition].values.tolist())] if len(dumaspos) is not 0 else pd.DataFrame()
 				y1 = book.BP35[j][ book.BP35[j][book.col_DumaPosition].isin(dumaspos[book.col_DumaPosition].values.tolist())]	if len(dumaspos) is not 0 else pd.DataFrame()
 
-				merged = pd.merge(x1,y1, how='outer', on=dumascol, suffixes=('_x', '_y'), right_index=True, left_index=True)
+				merged = pd.merge(x1,y1, how='outer', on=self.dumascol, suffixes=('_x', '_y'), right_index=True, left_index=True)
 				print("x1, y1", len(x1), len(y1))
 				print("merged2 ", len(merged))
 				if(len(x1) is 0 or len(y1) is 0):
@@ -58,7 +58,8 @@ class LowHigh:
 				merged['diffofinc'] = y_maf - x_maf
 				merged['diffofdec'] = x_maf - y_maf
 
-				# 한쪽에 값이 없으면 drop되기 때문에 어디쪽에 해도 상관은 없음				
+				# 한쪽에 값이 없으면 drop되기 때문에 어디쪽에 해도 상관은 없음	
+				# github 가져오기			
 				self.BPmergedinc.append(pd.DataFrame.dropna(merged[(incidx>=5.0).values], how='all'))
 				self.BPmergeddec.append(pd.DataFrame.dropna(merged[(decidx>=5.0).values], how='all'))
 
@@ -296,16 +297,16 @@ class LowHigh:
 		infolog("lowhigh BaseComp end")
 
 	def listofdata(self, ws, n_, types_, book):
-		print(types_)
-		# infolog("writing list of {1} data".format(str(types_)))
-		# module import error
-		from openpyxl.utils.dataframe import dataframe_to_rows
+		from analyzer import dataframe_to_rows
+		print(types_, type(types_))
+		# infolog("writing list of {0} data".format(types_))		
+		
 		bp = self.BPmergedinc[n_] if types_ is "INC" else self.BPmergeddec[n_]
-		rows = dataframe(bp)
-
+		# bp = bp[ self.dumascol + []]
+		rows = dataframe_to_rows(bp, index=False)
 
 		for r_idx, row in enumerate(rows, 1):
 			for c_idx, value in enumerate(row, 1):
-				ws.cell(row=r_idx, column=c_idx, value=value)
+				if str(value) != 'nan':
+					ws.cell(row=r_idx, column=c_idx, value=value)
 
-		# infolog("writing list of {1} data End".format(types_))

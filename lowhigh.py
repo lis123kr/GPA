@@ -52,16 +52,18 @@ class LowHigh:
 				
 				# 증가하는 위치와 감소하는 위치
 				## 양쪽에 서로 없는 index가 있으면 Error - 한쪽에 값이 없으면 NaN : dropna함수로 제거
-				incidx = y_maf - x_maf #>= 5.0
-				decidx = x_maf - y_maf #>= 5.0
-				
 				merged['diffofinc'] = y_maf - x_maf
 				merged['diffofdec'] = x_maf - y_maf
 
+				cond1 = merged['major_idx_x'] == merged['major_idx_y']
+				cond2 = merged['diffofinc'] >= 5.0
+				cond3 = merged['diffofdec'] >= 5.0
+				
+				
 				# 한쪽에 값이 없으면 drop되기 때문에 어디쪽에 해도 상관은 없음	
 				# github 가져오기			
-				self.BPmergedinc.append(pd.DataFrame.dropna(merged[(incidx>=5.0).values], how='all'))
-				self.BPmergeddec.append(pd.DataFrame.dropna(merged[(decidx>=5.0).values], how='all'))
+				self.BPmergedinc.append(pd.DataFrame.dropna(merged[ logical_and(cond1, cond2).values ], how='all'))
+				self.BPmergeddec.append(pd.DataFrame.dropna(merged[ logical_and(cond1, cond3).values ], how='all'))
 
 		book.sheet_list = sheet_names
 		book.nsheets = len(sheet_names)

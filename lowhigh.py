@@ -38,17 +38,9 @@ class LowHigh:
 				x1 = book.BP35[i][ book.BP35[i][book.col_DumaPosition].isin(dumaspos[book.col_DumaPosition].values.tolist())] if len(dumaspos) is not 0 else pd.DataFrame()
 				y1 = book.BP35[j][ book.BP35[j][book.col_DumaPosition].isin(dumaspos[book.col_DumaPosition].values.tolist())]	if len(dumaspos) is not 0 else pd.DataFrame()
 
-<<<<<<< HEAD
 				merged = pd.merge(x1,y1, how='outer', on=self.dumascol, suffixes=('_x', '_y'), right_index=True, left_index=True)
 				print("x1, y1", len(x1), len(y1))
 				print("merged2 ", len(merged))
-=======
-				merged = pd.merge(x1,y1, how='outer', on=dumascol, suffixes=('_x', '_y'), right_index=True, left_index=True)
-
-				# print("x1, y1", len(x1), len(y1))
-				# print("merged2 ", len(merged))
-
->>>>>>> b1e44ac00ee06e43e40cd7d591d20644bb8c0f16
 				if(len(x1) is 0 or len(y1) is 0):
 					self.BPmergedinc.append(pd.DataFrame())
 					self.BPmergeddec.append(pd.DataFrame())
@@ -60,24 +52,16 @@ class LowHigh:
 				
 				# 증가하는 위치와 감소하는 위치
 				## 양쪽에 서로 없는 index가 있으면 Error - 한쪽에 값이 없으면 NaN : dropna함수로 제거
+				incidx = y_maf - x_maf #>= 5.0
+				decidx = x_maf - y_maf #>= 5.0
 				
 				merged['diffofinc'] = y_maf - x_maf
 				merged['diffofdec'] = x_maf - y_maf
 
-<<<<<<< HEAD
 				# 한쪽에 값이 없으면 drop되기 때문에 어디쪽에 해도 상관은 없음	
 				# github 가져오기			
 				self.BPmergedinc.append(pd.DataFrame.dropna(merged[(incidx>=5.0).values], how='all'))
 				self.BPmergeddec.append(pd.DataFrame.dropna(merged[(decidx>=5.0).values], how='all'))
-=======
-				# added 0605
-				cond1 = merged['major_idx_x'] == merged['major_idx_y']
-				cond2 = merged['diffofinc'] >= 5.0
-				cond3 = merged['diffofdec'] >= 5.0
-				# 한쪽에 값이 없으면 drop되기 때문에 어디쪽에 해도 상관은 없음				
-				self.BPmergedinc.append(pd.DataFrame.dropna(merged[ logical_and(cond1, cond2).values ], how='all'))
-				self.BPmergeddec.append(pd.DataFrame.dropna(merged[ logical_and(cond1, cond3).values ], how='all'))
->>>>>>> b1e44ac00ee06e43e40cd7d591d20644bb8c0f16
 
 		book.sheet_list = sheet_names
 		book.nsheets = len(sheet_names)
@@ -313,7 +297,6 @@ class LowHigh:
 		infolog("lowhigh BaseComp end")
 
 	def listofdata(self, ws, n_, types_, book):
-<<<<<<< HEAD
 		from analyzer import dataframe_to_rows
 		print(types_, type(types_))
 		# infolog("writing list of {0} data".format(types_))		
@@ -321,14 +304,6 @@ class LowHigh:
 		bp = self.BPmergedinc[n_] if types_ is "INC" else self.BPmergeddec[n_]
 		# bp = bp[ self.dumascol + []]
 		rows = dataframe_to_rows(bp, index=False)
-=======
-		# infolog("writing list of {1} data".format(str(types_)))
-		# module import error
-		from openpyxl.utils.dataframe import dataframe_to_rows
-		bp = self.BPmergedinc[n_] if types_ is "INC" else self.BPmergeddec[n_]
-		rows = dataframe_to_rows(bp)
-
->>>>>>> b1e44ac00ee06e43e40cd7d591d20644bb8c0f16
 
 		for r_idx, row in enumerate(rows, 1):
 			for c_idx, value in enumerate(row, 1):

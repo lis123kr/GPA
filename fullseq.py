@@ -90,7 +90,7 @@ class FullSeq:
 				ws[dcol+str(rows[len(rows)-1] + 1)] = float(ws[dcol+str(rows[len(rows)-1] + 1)].value) + cnt_sum if ws[dcol+str(rows[len(rows)-1] + 1)].value != None else cnt_sum
 			elif types == "MAF":
 				# s, l = self.book.get_Number_of_GPS(BP, s1, s2)
-				ws[col+str(rows[len(rows)-1] + 1)] = str(round(total_ / cnt_sum, 3)) + '%' if cnt_sum is not 0 else '-'
+				ws[col+str(rows[len(rows)-1] + 1)] = str(round(total_ / cnt_sum, 3)) + '%' if cnt_sum != 0 else '-'
 				# 180612 추가, 3개 컬럼, 강제 지정
 				ws[dcol+str(rows[len(rows)-1] + 1)] = float(ws[dcol+str(rows[len(rows)-1] + 1)].value) + total_ if ws[dcol+str(rows[len(rows)-1] + 1)].value != None else total_
 
@@ -332,8 +332,9 @@ class FullSeq:
 
 			col = next_col(col)
 			# "Number of GPS / length"
-			ws[col+str(r)] = "Number of GPS / length * 100"
 			d2col = next_n_col(col, book.nsheets)
+			ws[col+str(r)] = "Number of GPS / length * 100"
+
 			for c in range(0, book.nsheets):
 				ws[col+str(r+2)] = book.sheet_list[c]
 				ws.merge_cells(start_row=r, start_column=6 + 2 *book.nsheets, end_row=r, end_column=6 + 3 *book.nsheets)
@@ -381,7 +382,7 @@ class FullSeq:
 			for rs in range(r+3, r+7+len(book.GenomeStructure)+len(book.RepeatRegion)):
 				ws[gcol+str(rs)].value = float(ws[gcol+str(rs)].value) / book.nsheets
 				ws[dcol+str(rs)] = str(round(float(ws[dcol+str(rs)].value) / float(ws[gcol+str(rs)].value), 3)) + '%' if float(ws[dcol+str(rs)].value) != 0 else '-'
-				ws[d2col + str(rs)] = (float(ws[d2col + str(rs)].value) / ( float(ws[d2col + str(rs)].value) / 3)) * 100 if float(ws[d2col + str(rs)].value) != 0.0 else 0
+				ws[d2col + str(rs)] = (float(ws[gcol + str(rs)].value) / ( float(ws[d2col + str(rs)].value) / book.nsheets)) * 100 if float(ws[d2col + str(rs)].value) != 0.0 else 0
 
 			col = next_col(col)
 			ws[col+str(r+3)] = str(self.s1[i]) + "~" + str(self.s2[i]) + "%" if self.s2[i] != 51.0 else str(self.s1[i]) + "% 이상"			
@@ -618,7 +619,7 @@ class FullSeq:
 			col = 'F'
 			numrow, mnrow = r+3+book.nsheets, r+5+2*book.nsheets
 			for c in range(0, 12):
-				ws[col+str(mnrow)] = str(round( float(ws[col+str(mnrow)].value) / float(ws[col+str(numrow)].value) * 100, 3))+'%' if ws[col+str(numrow)].value != 0 else 'N/A'
+				ws[col+str(mnrow)] = str(round( float(ws[col+str(mnrow)].value) / float(ws[col+str(numrow)].value), 3))+'%' if ws[col+str(numrow)].value != 0 else 'N/A'
 				col = next_col(col)
 
 		infolog("End sheet7")

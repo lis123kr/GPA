@@ -376,12 +376,14 @@ class FullSeq:
 					ws[d2col + str(rs_)] = ws[d2col + str(rs_)].value + tmp if ws[d2col + str(rs_)].value != None else tmp
 
 				ncol = next_col(ncol)
-				col = next_col(col)				
+				col = next_col(col)
 
 			# 180612 강제지정 
 			for rs in range(r+3, r+7+len(book.GenomeStructure)+len(book.RepeatRegion)):
-				ws[gcol+str(rs)].value = float(ws[gcol+str(rs)].value) / book.nsheets
+				# 수정   : 위치를 올림, 원래 위치 [수정2]
 				ws[dcol+str(rs)] = str(round(float(ws[dcol+str(rs)].value) / float(ws[gcol+str(rs)].value), 3)) + '%' if float(ws[dcol+str(rs)].value) != 0 else '-'
+				ws[gcol+str(rs)].value = float(ws[gcol+str(rs)].value) / book.nsheets
+				# 수정2   :  ws[dcol+str(rs)] = str(round(float(ws[dcol+str(rs)].value) / float(ws[gcol+str(rs)].value), 3)) + '%' if float(ws[dcol+str(rs)].value) != 0 else '-'
 				ws[d2col + str(rs)] = (float(ws[gcol + str(rs)].value) / ( float(ws[d2col + str(rs)].value) / book.nsheets)) * 100 if float(ws[d2col + str(rs)].value) != 0.0 else 0
 
 			col = next_col(col)

@@ -187,7 +187,7 @@ class Analyzer(object):
 			
 			types_ = ["INC", "DEC"]
 			from lowhigh import LowHigh
-			lh = LowHigh(book)
+			lh = LowHigh(book, False)
 			for i in range(0,2):
 				infolog("{0} analysis".format(types_[i]))
 				wb = Workbook()
@@ -231,7 +231,7 @@ class Analyzer(object):
 			fs.sheet7(ws7, book)
 			fs.maf5list(ws8, book)
 			wb.save("[분석]" + book.filename + '.xlsx')
-		book.P0.to_excel('[통합]'+book.filename+'.xlsx', index=False)
+		# book.P0.to_excel('[통합]'+book.filename+'.xlsx', index=False)
 
 	# 	return "Success"
 	# except PermissionError:

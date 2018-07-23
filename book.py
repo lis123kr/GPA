@@ -111,7 +111,7 @@ class Book:
 		# print(type(self.sheet_list), len(self.sheet_list))
 		for sheet in self.sheets:
 			# sheet = self.xls.parse(x)
-			print(type(sheet))
+			# print(type(sheet))
 			if self.P0 is None:
 				self.P0 = sheet
 			else:
@@ -136,7 +136,7 @@ class Book:
 		for i, d in enumerate(ranked_df[:,2]):
 			arr[i] = Passage[i:i+1][self.col_basepair[d]]
 		major = DataFrame(Passage.max(axis=1))
-		minor = DataFrame(arr, index=major.index)		
+		minor = DataFrame(arr, index=major.index)
 		return major, minor
 
 	def get_Number_of_GPS(self, BP, s1, s2):

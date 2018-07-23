@@ -1,5 +1,7 @@
 from analyzer import infolog, next_col #Analyzer.get_Number_of_GPS, next_col, infolog
 from numpy import logical_and, logical_or
+import pandas as pd
+from numpy import divide
 class LowHigh:
 	"""
 		analysis of increase or decrease sequence
@@ -11,19 +13,95 @@ class LowHigh:
 	s1 = [5.0, 5.0, 15.0, 25.0]
 
 	s2 = [51.0, 15.0, 25.0, 51.0]
+	def __init__(self, book, isAverage):
+		self.dumascol = [book.col_GenomeStructure, book.col_RepeatRegion, book.col_ORF, book.col_DumaPosition, book.col_DumaSeq]
+		if not isAverage:
+			self.Init_Individual(book)
+		else:
+			self.Init_Average(book)
+			
+	def Init_Average(self, book):
+		# A & B 위치별 MAF 평균
+		# Avg(A) ~ Avg(B)의 변화 분석
+		infolog("Init_Average")
+		A, B = [], []
 
-	def __init__(self, book):
+		# 필요 최종 column : dumacol(5), diffofdec, diffofinc, minor_idx_x, minor_idx_y, ->major(2)
+		ITG = None
+		for i in book.BP35:
+			i['maf'] = divide(i[['minor']], i[['sum']]) * 100
+			i = i[self.dumascol, 'maf', 'minor_idx', 'major_idx']
+
+			if not ITG:
+				ITG = i
+			else:
+				ITG = pd.merge(ITG, i, how='outer', on=dumascol, left_index=True, right_index=True)
+
+		for i in book.BP35:
+			i = i[ i[book.col_DumaPosition].isin( book.P0[book.col_DumaPosition].values.tolist() ) ]
+			i = i.loc[ ITG.index ]
+			i['maf'] = i['maf'].fillna(0)			
+
+		# major 처리
+		lg = True
+		for i in range(1, book.nsheets):
+			lg = logical_and(lg, book.BP35[i]['major_idx'] == book.BP35[i-1]['major_idx'])
+		ITG = ITG[ lg.values ]
+		for i in book.BP35:
+			i = i.loc[ ITG.index ]
+
+		for i in range(book.nsheets):
+			if book.sheet_list[i][0].upper() == 'A':
+				A.append(book.BP35[i])
+			else:
+				B.append(book.BP35[i])
+
+		# A끼리 merge -> consequence dumaposition 얻고 -> 전체 BP position이 맞아야.. 하기때문에 전체 merge.index
+		# major가 같은건 어떻게?
+		# 각 MAF 계산 및 위치에 맞게 평균
+		base_A = pd.DataFrame(ITG[self.dumascol], index=ITG.index)
+		base_B = pd.DataFrame(ITG[self.dumascol], index=ITG.index)
+		for a in A:
+			if base_A.get('maf') != None:
+				base_A['maf'] = base_A['maf'] + a['maf']
+			else:
+				base_A['maf'] = pd.Series( a['maf'], index=ITG.index)
+				base_A['major_idx_x'] = a['major_idx']
+				base_A['minor_idx_x'] = a['minor_idx']
+
+		for b in B:
+			if base_B.get('maf') != None:
+				base_B['maf'] = base_B['maf'] + b['maf']
+			else:
+				base_B['maf'] = pd.Series( b['maf'], index=ITG.index)
+				base_B['major_idx_y'] = b['major_idx']
+				base_B['minor_idx_y'] = b['minor_idx']
+
+		base_A['maf'] = base_A['maf'] / float(len(A))
+		base_B['maf'] = base_B['maf'] / float(len(B))
+
+		ITG = ITG[self.dumascol]
+		ITG['diffofinc'] = base_B['maf'] - base_A['maf']
+		ITG['diffofdec'] = base_A['maf'] - base_B['maf']
+		ITG['major_idx_x'] = base_A['major_idx_x']
+		ITG['minor_idx_x'] = base_A['minor_idx_x']
+		ITG['major_idx_y'] = base_B['major_idx_y']
+		ITG['minor_idx_y'] = base_B['minor_idx_y']
+
+		self.BPmergedinc.append(pd.DataFrame.dropna( ITG, how='all'))
+
+		infolog("End Init_Average")
+
+	def Init_Individual(self, book):
 		infolog("lowhigh init start")
 		sheet_names = []
 		BPmaf = []
-		self.dumascol = [book.col_GenomeStructure, book.col_RepeatRegion, book.col_ORF, book.col_DumaPosition, book.col_DumaSeq]
 		for bp in book.BP35:
 			#get maf 5%
 			s, l, minor_ = book.get_Number_of_GPS(bp, 5.0, 51.0)
 			BPmaf.append(bp.loc[minor_.index])
 
-		import pandas as pd
-		from numpy import divide
+		
 		for i, x in enumerate(BPmaf):
 			for j, y in enumerate(BPmaf):
 				if i >= j:
@@ -36,7 +114,7 @@ class LowHigh:
 
 				# dumas position 기준으로 양쪽 위치 추출
 				x1 = book.BP35[i][ book.BP35[i][book.col_DumaPosition].isin(dumaspos[book.col_DumaPosition].values.tolist())] if len(dumaspos) is not 0 else pd.DataFrame()
-				y1 = book.BP35[j][ book.BP35[j][book.col_DumaPosition].isin(dumaspos[book.col_DumaPosition].values.tolist())]	if len(dumaspos) is not 0 else pd.DataFrame()
+				y1 = book.BP35[j][ book.BP35[j][book.col_DumaPosition].isin(dumaspos[book.col_DumaPosition].values.tolist())] if len(dumaspos) is not 0 else pd.DataFrame()
 
 				merged = pd.merge(x1,y1, how='outer', on=self.dumascol, suffixes=('_x', '_y'), right_index=True, left_index=True)
 				
@@ -56,8 +134,7 @@ class LowHigh:
 
 				cond1 = merged['major_idx_x'] == merged['major_idx_y']
 				cond2 = merged['diffofinc'] >= 5.0
-				cond3 = merged['diffofdec'] >= 5.0
-				
+				cond3 = merged['diffofdec'] >= 5.0				
 
 				# 한쪽에 값이 없으면 drop되기 때문에 어디쪽에 해도 상관은 없음	
 				# github 가져오기			
@@ -219,7 +296,7 @@ class LowHigh:
 
 			col_GPS = col
 			ws[col+'1'] = '{0} in genetic polymorphism'.format("Increase" if types_ == 'INC' else "Decrease")
-			for s in range(book.nsheets):				
+			for s in range(book.nsheets):
 				ws[col+'2'] = book.sheet_list[s]
 				bpx = bp[s][ logical_and(bp[s][col_diff] >= self.s1[i], bp[s][col_diff] < self.s2[i]).values ]
 

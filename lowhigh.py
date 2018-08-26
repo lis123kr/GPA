@@ -1,7 +1,8 @@
 from analyzer import infolog, next_col #Analyzer.get_Number_of_GPS, next_col, infolog
 from numpy import logical_and, logical_or
 import pandas as pd
-from numpy import divide
+from numpy import divide, zeros, ones
+
 class LowHigh:
 	"""
 		analysis of increase or decrease sequence
@@ -19,78 +20,160 @@ class LowHigh:
 			self.Init_Individual(book)
 		else:
 			self.Init_Average(book)
-			
+		
+	# todo : 테스트
 	def Init_Average(self, book):
+		book.save_data(book, 'Average_book_vaccine.pkl')
+
+		for sn in book.sheet_list:
+			assert sn[0] == 'A' or sn[0] == 'B', "sheet name"
+
+		# for i in range(0,len(book.nsheets)):
+		# 	book.BPRaw[i]['sum_'+ book.sheet_list[i]] = book.BPRaw[i][book.basepair].sum(axis=1)
+
 		# A & B 위치별 MAF 평균
 		# Avg(A) ~ Avg(B)의 변화 분석
 		infolog("Init_Average")
-		A, B = [], []
 
-		# 필요 최종 column : dumacol(5), diffofdec, diffofinc, minor_idx_x, minor_idx_y, ->major(2)
-		ITG = None
-		for i in book.BP35:
-			i['maf'] = divide(i[['minor']], i[['sum']]) * 100
-			i = i[self.dumascol, 'maf', 'minor_idx', 'major_idx']
+		# # 필요 최종 column : dumacol(5), diffofdec, diffofinc, minor_idx_x, minor_idx_y, ->major(2) / minor..
+		# # 필요 값 : any maf 5% 이상, all maf 5% 이상, 값이 있는 곳
 
-			if not ITG:
-				ITG = i
-			else:
-				ITG = pd.merge(ITG, i, how='outer', on=dumascol, left_index=True, right_index=True)
+		## 정한 값 :	minor_idx_x -> A의 가장 마지막.. / minor_idx_y -> B의 가장 마지막
+		## 			minor_x -> A의 minor 평균 / minor_y -> B의 minor 평균
+		##			
+		for j, i in enumerate(book.BP35):
+			i['maf_'+book.sheet_list[j]] = divide(i[['minor']], i[['sum']]) * 100
+			i[book.sheet_list[j][0].upper()+'_minor_idx'] = i[['minor_idx']]
+			book.BP35[j] = i.drop(columns='minor_idx')
 
-		for i in book.BP35:
-			i = i[ i[book.col_DumaPosition].isin( book.P0[book.col_DumaPosition].values.tolist() ) ]
-			i = i.loc[ ITG.index ]
-			i['maf'] = i['maf'].fillna(0)			
-
-		# major 처리
-		lg = True
+		merged = book.BP35[0].drop(columns=['seq', 'sum', 'A', 'G', 'C', 'T', 'major'])
+		merged['maf_'+book.sheet_list[0][0].upper()] = book.BP35[0]['maf_'+book.sheet_list[0]]
 		for i in range(1, book.nsheets):
-			lg = logical_and(lg, book.BP35[i]['major_idx'] == book.BP35[i-1]['major_idx'])
-		ITG = ITG[ lg.values ]
-		for i in book.BP35:
-			i = i.loc[ ITG.index ]
+			book.BP35[i] = book.BP35[i].drop(columns=['seq', 'sum', 'A', 'G', 'C', 'T', 'major'])
+			grp = book.sheet_list[i][0].upper()
+			col_maf = 'maf_' + grp
+			col_minor_idx = grp+'_minor_idx'
 
-		for i in range(book.nsheets):
+			merged = pd.merge(merged, book.BP35[i], on=self.dumascol, how='outer')
+			if not merged.columns.contains(col_maf): 
+				merged[col_maf] = merged['maf_' + book.sheet_list[i] ]
+			else : 
+				merged[col_maf] = merged[[col_maf, 'maf_'+book.sheet_list[i]]].sum(axis=1)
+
+			if merged.columns.contains(col_minor_idx+'_x'):
+			    merged[col_minor_idx] = merged[col_minor_idx+'_y']
+			    merged = merged.drop(columns=col_minor_idx+'_x').rename(index=str, columns={col_minor_idx+'_y' : col_minor_idx})
+
+			merged = merged[ merged['major_idx_x'] == merged['major_idx_y'] ]
+			merged = merged.drop(columns = 'major_idx_x').rename(index=str, columns={"major_idx_y": "major_idx"})
+
+		Acol, Bcol = [], []
+		for i in range(len(book.sheet_list)):
 			if book.sheet_list[i][0].upper() == 'A':
-				A.append(book.BP35[i])
+				Acol.append('maf_'+book.sheet_list[i])
 			else:
-				B.append(book.BP35[i])
+				Bcol.append('maf_'+book.sheet_list[i])
 
-		# A끼리 merge -> consequence dumaposition 얻고 -> 전체 BP position이 맞아야.. 하기때문에 전체 merge.index
-		# major가 같은건 어떻게?
-		# 각 MAF 계산 및 위치에 맞게 평균
-		base_A = pd.DataFrame(ITG[self.dumascol], index=ITG.index)
-		base_B = pd.DataFrame(ITG[self.dumascol], index=ITG.index)
-		for a in A:
-			if base_A.get('maf') != None:
-				base_A['maf'] = base_A['maf'] + a['maf']
-			else:
-				base_A['maf'] = pd.Series( a['maf'], index=ITG.index)
-				base_A['major_idx_x'] = a['major_idx']
-				base_A['minor_idx_x'] = a['minor_idx']
+		merged['maf_A'] = merged['maf_A'] / len(Acol)
+		merged['maf_B'] = merged['maf_B'] / len(Bcol)
 
-		for b in B:
-			if base_B.get('maf') != None:
-				base_B['maf'] = base_B['maf'] + b['maf']
-			else:
-				base_B['maf'] = pd.Series( b['maf'], index=ITG.index)
-				base_B['major_idx_y'] = b['major_idx']
-				base_B['minor_idx_y'] = b['minor_idx']
+		A_all, A_any = True, False
+		B_all, B_any = True, False
+		for i in Acol:
+			A_all = logical_and( A_all, merged[i] >= 5.0 )
+			A_any = logical_or( A_any, merged[i] >= 5.0 )
+		    
+		for i in Bcol:
+			B_all = logical_and( B_all, merged[i] >= 5.0 )
+			B_any = logical_or( B_any, merged[i] >= 5.0 )
+		# A, B = [], []
 
-		base_A['maf'] = base_A['maf'] / float(len(A))
-		base_B['maf'] = base_B['maf'] / float(len(B))
+		merged['minor_idx_x'] = merged['A_minor_idx'].T[-1:].T
+		merged['minor_idx_y'] = merged['B_minor_idx'].T[-1:].T
 
-		ITG = ITG[self.dumascol]
-		ITG['diffofinc'] = base_B['maf'] - base_A['maf']
-		ITG['diffofdec'] = base_A['maf'] - base_B['maf']
-		ITG['major_idx_x'] = base_A['major_idx_x']
-		ITG['minor_idx_x'] = base_A['minor_idx_x']
-		ITG['major_idx_y'] = base_B['major_idx_y']
-		ITG['minor_idx_y'] = base_B['minor_idx_y']
+		merged['major_idx_x'] = merged['major_idx']
+		merged['major_idx_y'] = merged['major_idx']
+		merged = merged.drop(columns = ['A_minor_idx', 'B_minor_idx'])
 
-		self.BPmergedinc.append(pd.DataFrame.dropna( ITG, how='all'))
+		tmpx = merged['minor_x'].sum(axis=1) / len(Acol)
+		tmpy = merged['minor_y'].sum(axis=1) / len(Bcol)
+		merged = merged.drop(columns=['minor_x', 'minor_y'])
+		merged['minor_x'] = tmpx
+		merged['minor_y'] = tmpy
 
+		merged['diffofinc'] = merged['maf_B'] - merged['maf_A']
+		merged['diffofdec'] = merged['maf_A'] - merged['maf_B']
+
+		cond2 = merged['diffofinc'] >= 5.0
+		cond3 = merged['diffofdec'] >= 5.0
+
+		maf_5_all = merged[ logical_and(A_all, B_all).values ]
+		maf_5_any = merged[ logical_or(A_any, B_any).values ]
+
+		# merged.to_excel('yc_v2_merged.xlsx')
+		# maf_5_all.to_excel('yc_v2_maf_5_all.xlsx')
+		# maf_5_any.to_excel('yc_v2_maf_5_any.xlsx')
+
+		print(len(merged), len(maf_5_all), len(maf_5_any))
+
+		self.BPmergedinc.append( merged)
+		self.BPmergedinc.append(maf_5_all)
+		self.BPmergedinc.append(maf_5_any)
+
+		self.BPmergeddec.append( merged)
+		self.BPmergeddec.append(maf_5_all)
+		self.BPmergeddec.append(maf_5_any)
+		book.sheet_list = ['All', 'All_5', 'Any_5']
+		book.nsheets = len(book.sheet_list)
 		infolog("End Init_Average")
+
+	def Init_Cartesian(self, book):
+		for sname in book.sheet_list:
+			assert sname[0] == 'A' or sname[0] == 'B', "sheet name"
+
+		# minor idx는 고려 X............
+		Acol, Bcol = [], []
+		for i, j in enumerate(book.BP35):
+			grp = book.sheet_list[i][0].upper()
+			j[grp+'_maf'] = divide( j[['minor']], j[['sum']]) * 100
+			j[book.sheet_list[i]+'_maf'] = divide( j[['minor']], j[['sum']]) * 100
+			j[grp+'_major_idx'], j[grp+'_minor_idx'] = j[['major_idx']], j[['minor_idx']]
+			j[grp+'_minor'] = j[['minor']]
+			j = j.drop(columns=['minor', 'major_idx', 'minor_idx'])
+
+			if grp == 'A': Acol.append(j)
+			else: Bcol.append(j)
+
+		merged = None
+		for A in Acol:
+			if merged is None: merged = A
+			else: merged = pd.merge(merged, A, on=self.dumascol, how='outer')
+			merged = merged.drop(columns=['seq', 'sum', 'A', 'G', 'C', 'T', 'major'])			
+			for B in Bcol:
+				merged = pd.merge(merged, B, on=self.dumascol, how='outer')
+				merged = merged[ merged['A_major_idx'] == merged['B_major_idx'] ]
+				if merged.columns.contains('maf'): merged['maf'] = merged['maf'] + abs(merged['A_maf'] - merged['B_maf'])
+				else: merged['maf'] = abs(merged['A_maf'] - merged['B_maf'])
+
+				merged = merged.drop(columns = ['B_maf', 'B_major_idx', 'seq', 'sum', 'A', 'G', 'C', 'T', 'major'])
+			merged = merged.drop(columns=['A_maf', 'A_major_idx'])
+
+		_all, _any = True, False
+		for sn in book.sheet_list:
+			_all = logical_and( _all, merged[sn+'_maf'] >= 5.0)
+			_any = logical_or( _any, merged[sn+'_maf'] >= 5.0)
+
+		merged['major_idx_x'], merged['major_idx_y'] = True, True
+		merged['diffofinc'] = merged['maf'] / float(len(Acol) * len(Bcol))
+		maf_5_all = merged[ _all.values ]
+		maf_5_any = merged[ _any.values ]
+
+		self.BPmergedinc.append(merged)
+		self.BPmergedinc.append(maf_5_all)
+		self.BPmergedinc.append(maf_5_any)
+
+		book.sheet_list = ['All', 'All_5', 'Any_5']
+		book.nsheets = len(book.sheet_list)
 
 	def Init_Individual(self, book):
 		infolog("lowhigh init start")
@@ -220,6 +303,7 @@ class LowHigh:
 				
 				ncol = chr(ord(col)+book.nsheets)
 				ws[col+str(rows+1)] = book.sheet_list[s]
+				ws[chr(ord(col)+book.nsheets)+str(rows+1)] = book.sheet_list[s]
 
 				sum_, avg_ = 0, 0
 				for r in range(2, 2+len(book.GenomeStructure)):
@@ -237,7 +321,7 @@ class LowHigh:
 					row = rows+r+3+len(book.GenomeStructure)
 					cnt = bpx[ bpx[book.col_RepeatRegion] == book.RepeatRegion[r]][[col_diff]]
 					ws[col+str(row)] = len(cnt)
-					ws[ncol+str(row)] = str(round((cnt.sum()[0] / len(cnt)),3)) if len(cnt) is not 0 else 'N/A'
+					ws[ncol+str(row)] = str(round((cnt.sum()[0] / len(cnt)),3))+'%' if len(cnt) is not 0 else 'N/A'
 					sum_ += len(cnt)
 					avg_ += cnt.sum()[0]
 				ws[col+str(3+leng)] = sum_

@@ -187,7 +187,7 @@ class Analyzer(object):
 			
 			types_ = ["INC", "DEC"]
 			from lowhigh import LowHigh
-			lh = LowHigh(book, False)
+			lh = LowHigh(book, isAverage=False)
 			for i in range(0,2):
 				infolog("{0} analysis".format(types_[i]))
 				wb = Workbook()
@@ -208,7 +208,7 @@ class Analyzer(object):
 					lh.listofdata(ws, n_, types_[i], book)
 
 				wb.save("["+types_[i]+"분석]" + book.filename + '.xlsx')
-		else: # full
+		elif Analyze_type == 'Full': # full
 			from fullseq import FullSeq
 			fs = FullSeq(book)
 			wb = Workbook()
@@ -231,6 +231,44 @@ class Analyzer(object):
 			fs.sheet7(ws7, book)
 			fs.maf5list(ws8, book)
 			wb.save("[분석]" + book.filename + '.xlsx')
+		elif Analyze_type == 'Average':
+			types_ = ["INC", "DEC"]
+			from lowhigh import LowHigh
+			lh = LowHigh(book, isAverage=True)
+			for i in range(0,2):				
+				wb = Workbook()
+				ws1 = wb.active				
+				ws3 = wb.create_sheet("Genome structure")
+				ws4 = wb.create_sheet("ORF")
+				ws5 = wb.create_sheet("NCR")
+				ws6 = wb.create_sheet("Base composition_1")
+				
+				lh.PolymorphicSite(ws1, types_[i], book)
+				lh.GenomeStr(ws3,types_[i], book)
+				lh.ORFNCR(ws4, types_[i], "ORF", book)
+				lh.ORFNCR(ws5, types_[i], "NCR", book)
+				lh.BaseComp(ws6, types_[i], book)
+
+				wb.save("["+types_[i]+"분석]" + book.filename + '.xlsx')
+		elif Analyze_type == 'Cartesian':
+			from lowhigh import LowHigh
+			lh = LowHigh(book, isAverage=True)			
+			wb = Workbook()
+			ws1 = wb.active				
+			ws3 = wb.create_sheet("Genome structure")
+			ws4 = wb.create_sheet("ORF")
+			ws5 = wb.create_sheet("NCR")
+			ws6 = wb.create_sheet("Base composition_1")
+			
+			lh.PolymorphicSite(ws1, 'INC', book)
+			lh.GenomeStr(ws3,'INC', book)
+			lh.ORFNCR(ws4, 'INC', "ORF", book)
+			lh.ORFNCR(ws5, 'INC', "NCR", book)
+			lh.BaseComp(ws6, 'INC', book)
+
+			wb.save("[Avg_Cts]"+book.filename + '.xlsx')
+			pass
+
 		# book.P0.to_excel('[통합]'+book.filename+'.xlsx', index=False)
 
 	# 	return "Success"

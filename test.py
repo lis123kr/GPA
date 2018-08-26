@@ -4,7 +4,7 @@ from analyzer import Analyzer
 # 0 : gps / 1 : 증감
 flag = 0
 
-pfile = 'N_pOB.pkl'
+pfile = 'Average_book_vaccine.pkl'
 
 # input_files= [ 'genome.txt', 'repeat.txt', 'ORF.txt', 'NCR.txt']
 # dir_ = '.\\test\\'
@@ -16,6 +16,6 @@ pfile = 'N_pOB.pkl'
 # 		inputs[key] = f.read().replace('\n',',').strip(',').split(',')
 
 book = Book.load_data(pfile)
-Analyze_type = 'Full' #"Difference_of_Minor"
+Analyze_type = 'Average' #"Difference_of_Minor"
 excel = Analyzer()
 excel.Analyze(Analyze_type, book)

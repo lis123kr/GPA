@@ -31,11 +31,11 @@ if a graphic user interface showed up. then,
 then, it will run.
 
 ### GUI example
-![Image](asset/GUI.PNG)
+![Image](asset/GUI.PNG =450x540)
 
 ### Visualization examples
-![Image](asset/visualization.PNG)
-![Image](asset/visualization-3.JPG)
+![Image](asset/visualization.PNG =500x350)
+![Image](asset/visualization-3.JPG =500x350)
 
 
 ### License

@@ -1,10 +1,20 @@
+"""
+ Copyright [2017] [Il Seop Lee / Chungbuk National University]
+ 
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+ http://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ """
+ 
 # -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file 'second.ui'
-#
-# Created by: PyQt5 UI code generator 5.8.2
-#
-# WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from time import time
@@ -13,16 +23,20 @@ import pandas as pd
 import logging
 from book import Book
 from analyzer import Analyzer
+import warnings
+warnings.filterwarnings("ignore")
 
 class Ui_Main_frame(object):
 
-    book = None
+    def __init__(self):
+        self.book = None
+        self.xls = None
 
     def setupUi(self, Main_frame):
         Main_frame.setObjectName("Main_frame")
         Main_frame.setWindowModality(QtCore.Qt.NonModal)
         Main_frame.setEnabled(True)
-        Main_frame.resize(757, 785)
+        Main_frame.resize(757, 834)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -51,14 +65,14 @@ class Ui_Main_frame(object):
 
         self.groupBox = QtWidgets.QGroupBox(Main_frame)
         self.groupBox.setEnabled(True)
-        self.groupBox.setGeometry(QtCore.QRect(20, 20, 481, 521))
+        self.groupBox.setGeometry(QtCore.QRect(20, 20, 481, 571))
         font = QtGui.QFont()
         font.setPointSize(9)
         self.groupBox.setFont(font)
         self.groupBox.setFlat(False)
         self.groupBox.setObjectName("groupBox")
         self.sheetlist_Widget = QtWidgets.QListWidget(self.groupBox)
-        self.sheetlist_Widget.setGeometry(QtCore.QRect(20, 70, 441, 431))
+        self.sheetlist_Widget.setGeometry(QtCore.QRect(20, 70, 441, 481))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
@@ -74,6 +88,7 @@ class Ui_Main_frame(object):
         self.sheetlist_Widget.setObjectName("sheetlist_Widget")
 
         self.sheetlist_Widget.itemClicked.connect(self.on_change)
+
 
         item = QtWidgets.QListWidgetItem()
         item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
@@ -96,7 +111,7 @@ class Ui_Main_frame(object):
         font.setBold(True)
         font.setWeight(75)
         self.Load_btn.setFont(font)
-        self.Load_btn.setText("파일 불러오기")
+        self.Load_btn.setText("Load File")
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap(":/load2.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.Load_btn.setIcon(icon1)
@@ -108,11 +123,11 @@ class Ui_Main_frame(object):
         self.Load_btn.clicked.connect(self.getfile)
 
         self.groupBox_2 = QtWidgets.QGroupBox(Main_frame)
-        self.groupBox_2.setGeometry(QtCore.QRect(520, 120, 211, 421))
+        self.groupBox_2.setGeometry(QtCore.QRect(520, 120, 211, 481))
         self.groupBox_2.setObjectName("groupBox_2")
-        self.Dumaseq_Combobox = QtWidgets.QComboBox(self.groupBox_2)
-        self.Dumaseq_Combobox.setGeometry(QtCore.QRect(20, 90, 171, 21))
-        self.Dumaseq_Combobox.setObjectName("Dumaseq_Combobox")
+        self.Dumaseq_combobox = QtWidgets.QComboBox(self.groupBox_2)
+        self.Dumaseq_combobox.setGeometry(QtCore.QRect(20, 90, 171, 21))
+        self.Dumaseq_combobox.setObjectName("Dumaseq_combobox")
         self.label = QtWidgets.QLabel(self.groupBox_2)
         self.label.setGeometry(QtCore.QRect(20, 70, 141, 18))
         font = QtGui.QFont()
@@ -174,9 +189,9 @@ class Ui_Main_frame(object):
         self.label_5.setFont(font)
         self.label_5.setAutoFillBackground(False)
         self.label_5.setObjectName("label_5")
-        self.DumaPos_Combobox = QtWidgets.QComboBox(self.groupBox_2)
-        self.DumaPos_Combobox.setGeometry(QtCore.QRect(20, 40, 171, 24))
-        self.DumaPos_Combobox.setObjectName("DumaPos_Combobox")
+        self.DumaPos_combobox = QtWidgets.QComboBox(self.groupBox_2)
+        self.DumaPos_combobox.setGeometry(QtCore.QRect(20, 40, 171, 24))
+        self.DumaPos_combobox.setObjectName("DumaPos_combobox")
         self.label_9 = QtWidgets.QLabel(self.groupBox_2)
         self.label_9.setGeometry(QtCore.QRect(20, 20, 151, 18))
         font = QtGui.QFont()
@@ -192,22 +207,34 @@ class Ui_Main_frame(object):
         font.setPointSize(7)
         self.label_10.setFont(font)
         self.label_10.setObjectName("label_10")
-        self.radio_full = QtWidgets.QRadioButton(self.groupBox_2)
-        self.radio_full.setGeometry(QtCore.QRect(30, 390, 161, 22))
-        font = QtGui.QFont()
-        font.setPointSize(7)
-        self.radio_full.setFont(font)
-        self.radio_full.setChecked(True)
-        self.radio_full.setObjectName("radio_full")
         self.radio_minor = QtWidgets.QRadioButton(self.groupBox_2)
-        self.radio_minor.setGeometry(QtCore.QRect(30, 360, 151, 22))
+        self.radio_minor.setGeometry(QtCore.QRect(30, 390, 161, 22))
         font = QtGui.QFont()
         font.setPointSize(7)
         self.radio_minor.setFont(font)
         self.radio_minor.setChecked(False)
         self.radio_minor.setObjectName("radio_minor")
+        self.radio_full = QtWidgets.QRadioButton(self.groupBox_2)
+        self.radio_full.setGeometry(QtCore.QRect(30, 360, 151, 22))
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        self.radio_full.setFont(font)
+        self.radio_full.setChecked(True)
+        self.radio_full.setObjectName("radio_full")
+        self.radio_average = QtWidgets.QRadioButton(self.groupBox_2)
+        self.radio_average.setGeometry(QtCore.QRect(30, 420, 130, 22))
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        self.radio_average.setFont(font)
+        self.radio_average.setObjectName("radio_average")
+        self.radio_cartesian = QtWidgets.QRadioButton(self.groupBox_2)
+        self.radio_cartesian.setGeometry(QtCore.QRect(30, 450, 171, 22))
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        self.radio_cartesian.setFont(font)
+        self.radio_cartesian.setObjectName("radio_cartesian")
         self.groupBox_3 = QtWidgets.QGroupBox(Main_frame)
-        self.groupBox_3.setGeometry(QtCore.QRect(20, 550, 711, 221))
+        self.groupBox_3.setGeometry(QtCore.QRect(20, 600, 711, 221))
         self.groupBox_3.setObjectName("groupBox_3")
         self.Genome_edit = QtWidgets.QTextEdit(self.groupBox_3)
         self.Genome_edit.setGeometry(QtCore.QRect(20, 50, 151, 161))
@@ -227,18 +254,18 @@ class Ui_Main_frame(object):
         self.Repeat_edit = QtWidgets.QTextEdit(self.groupBox_3)
         self.Repeat_edit.setGeometry(QtCore.QRect(200, 50, 141, 161))
         self.Repeat_edit.setObjectName("Repeat_edit")
-        self.label_13 = QtWidgets.QLabel(self.groupBox_3)
-        self.label_13.setGeometry(QtCore.QRect(390, 30, 77, 18))
+        self.label_orf = QtWidgets.QLabel(self.groupBox_3)
+        self.label_orf.setGeometry(QtCore.QRect(390, 30, 77, 18))
         font = QtGui.QFont()
         font.setPointSize(8)
-        self.label_13.setFont(font)
-        self.label_13.setObjectName("label_13")
-        self.label_14 = QtWidgets.QLabel(self.groupBox_3)
-        self.label_14.setGeometry(QtCore.QRect(560, 30, 77, 18))
+        self.label_orf.setFont(font)
+        self.label_orf.setObjectName("label_orf")
+        self.label_NCR = QtWidgets.QLabel(self.groupBox_3)
+        self.label_NCR.setGeometry(QtCore.QRect(560, 30, 77, 18))
         font = QtGui.QFont()
         font.setPointSize(8)
-        self.label_14.setFont(font)
-        self.label_14.setObjectName("label_14")
+        self.label_NCR.setFont(font)
+        self.label_NCR.setObjectName("label_NCR")
         self.ORF_combobox_edit = QtWidgets.QTextEdit(self.groupBox_3)
         self.ORF_combobox_edit.setGeometry(QtCore.QRect(380, 50, 141, 161))
         self.ORF_combobox_edit.setObjectName("ORF_combobox_edit")
@@ -250,19 +277,16 @@ class Ui_Main_frame(object):
         self.groupBox.raise_()
         self.groupBox_3.raise_()
 
-        self.xls = None
         self.retranslateUi(Main_frame)
         self.sheetlist_Widget.setCurrentRow(-1)
         self.Btn_Box.accepted.connect(Main_frame.accept)
         self.Btn_Box.rejected.connect(Main_frame.reject)
         QtCore.QMetaObject.connectSlotsByName(Main_frame)
 
-        
-
     def retranslateUi(self, Main_frame):
         _translate = QtCore.QCoreApplication.translate
         Main_frame.setWindowTitle(_translate("Main_frame", "Analyzing Sequence"))
-        self.groupBox.setTitle(_translate("Main_frame", "입력 데이터"))
+        self.groupBox.setTitle(_translate("Main_frame", "Input data"))
         self.sheetlist_Widget.setSortingEnabled(False)
         __sortingEnabled = self.sheetlist_Widget.isSortingEnabled()
         self.sheetlist_Widget.setSortingEnabled(False)
@@ -272,17 +296,19 @@ class Ui_Main_frame(object):
         item.setText(_translate("Main_frame", "sheet2"))
         self.sheetlist_Widget.setSortingEnabled(__sortingEnabled)
         self.filename_label.setText(_translate("Main_frame", "sample.xlsx"))
-        self.groupBox_2.setTitle(_translate("Main_frame", "Column 명 설정"))
-        self.label.setText(_translate("Main_frame", "Duma Seqeunce"))
+        self.groupBox_2.setTitle(_translate("Main_frame", "Column configuration"))
+        self.label.setText(_translate("Main_frame", "Reference Seqeunce"))
         self.label_2.setText(_translate("Main_frame", "Genome Structure"))
         self.label_3.setText(_translate("Main_frame", "Repeat Region"))
         self.label_4.setText(_translate("Main_frame", "ORF"))
-        self.label_5.setText(_translate("Main_frame", " ※전처리 선택"))
-        self.label_9.setText(_translate("Main_frame", "Duma Position"))
-        self.label_10.setText(_translate("Main_frame", "Sequence"))
-        self.radio_minor.setText(_translate("Main_frame", "5% 이상 변화 추출"))
-        self.radio_full.setText(_translate("Main_frame", "Full Sequence"))
-        self.groupBox_3.setTitle(_translate("Main_frame", "Column 값 설정"))
+        self.label_5.setText(_translate("Main_frame", " ※Modes of Analysis"))
+        self.label_9.setText(_translate("Main_frame", "Reference Position"))
+        self.label_10.setText(_translate("Main_frame", "Strain Sequence"))
+        self.radio_full.setText(_translate("Main_frame", "Strain 다형성 분석"))
+        self.radio_minor.setText(_translate("Main_frame", "5%이상 증감분석"))
+        self.radio_average.setText(_translate("Main_frame", "집단 평균분석"))
+        self.radio_cartesian.setText(_translate("Main_frame", "전체 평균분석"))
+        self.groupBox_3.setTitle(_translate("Main_frame", "Values of each columns"))
         self.Genome_edit.setHtml(_translate("Main_frame", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -297,12 +323,12 @@ class Ui_Main_frame(object):
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'Gulim\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
-        self.label_13.setText(_translate("Main_frame", "ORF"))
-        self.label_14.setText(_translate("Main_frame", "NCR"))
+        self.label_orf.setText(_translate("Main_frame", "ORF"))
+        self.label_NCR.setText(_translate("Main_frame", "NCR"))
 
     def getfile(self):
         # get full path of selected file
-        # filename = (filepath, filetype)
+        # filename = (filepath, filetype)        
         from os import getenv
         filename = QtWidgets.QFileDialog.getOpenFileName(None, 'Open File', 
             getenv('HOME'), "Excel files (*.xlsx)")[0]
@@ -340,7 +366,6 @@ class Ui_Main_frame(object):
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.exec_()            
 
-
     def replace_(self, L):
         L = L.replace('\n',',').replace(',,',',').replace(',,',',').replace(',,',',').replace(',,',',').strip(',').split(',')
         if L[-1] == '':
@@ -351,15 +376,15 @@ class Ui_Main_frame(object):
 
     def Analyzing(self):
         if self.book.xls is not None:
-        # try:
-            logging.basicConfig(filename='./GPA_log.log',level=logging.DEBUG)
+            logging.basicConfig(filename='./GPA.log',level=logging.DEBUG)
             
             for index in range(self.sheetlist_Widget.count()):
                 if self.sheetlist_Widget.item(index).checkState() == QtCore.Qt.Checked:
                     self.book.sheet_list.append(self.sheetlist_Widget.item(index).text())
+                    self.book.sheets.append(self.sheets[index])
                     
-            self.book.col_DumaPosition = self.DumaPos_Combobox.currentText()
-            self.book.col_DumaSeq = self.Dumaseq_Combobox.currentText()
+            self.book.col_DumaPosition = self.DumaPos_combobox.currentText()
+            self.book.col_DumaSeq = self.Dumaseq_combobox.currentText()
             self.book.col_Sequence = self.seq_combobox.currentText()
             self.book.col_GenomeStructure = self.GenomeST_combobox.currentText()
             self.book.col_RepeatRegion = self.RepeatReG_combobox.currentText()
@@ -372,38 +397,50 @@ class Ui_Main_frame(object):
             
             start_time = time()
             
-            logging.info("{0} Start Initialization of Data".format(time()))
-            excel = Analyzer(self.book)
+            logging.info("Start Initialization of Data")
+            self.excel = Analyzer(self.book)
             if self.radio_full.isChecked():
                 Analyze_type = "Full"
-                logging.info("{0} Start Analyzing of full sequence ".format(time()))
-            else:
+                logging.info("Start Analyzing of full sequence ")
+            elif self.radio_minor.isChecked():
                 Analyze_type = "Difference_of_Minor"
-                logging.info("{0} Start analyzing of difference_of_Minor Analyzation".format(time()))
+                logging.info("Start analyzing of difference_of_Minor Analyzation")
+            elif self.radio_average.isChecked():
+                Analyze_type = "Average"
+                logging.info("Start analyzing the average of A_ and B_")
+            else:
+                Analyze_type = "Cartesian"
+                logging.info("Start analyzing average of cartesian")
 
             # Start Analyzing
             logging.info("{0} Start Analyzation".format(time()))
-            self.Analyze_Dialog(excel.Analyze(Analyze_type, excel.book), start_time)
+            self.Analyze_Dialog(self.excel.Analyze(Analyze_type, self.excel.book), start_time)
 
-        # except Exception as e:
-        #     logging.error("{0} {1}".format(time(), e))
-                
+            if Analyze_type == 'Difference_of_Minor':
+                from Visualization import visualization
+                if self.excel.book.nsheets != 3: return
+                vis = visualization(self.excel.book)
+                vis.visualize()
+
     def Analyze_Dialog(self, Result, start_time):
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Information)   
         msg.setWindowTitle("Info")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        # if Result == "Success":
-        #     msg.setText("Success !")
-        #     msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
-        #     logging.info("{0} Success to finish the analyzation".format(time()))
-        # elif Result == "Error":
-        #     msg.setText("Error!\n컬럼명 일치 여부, 입력 누락, 컬럼 선택 등 기타 주의사항 확인")
-        #     msg.setInformativeText("ls123kr@naver.com 문의")
-        #     logging.error("{0} Etc Error".format(time()))
-        # elif Result == "Permission":
-        #     msg.setText("Permission Error!\n생성하려는 파일과 동일한 이름의 파일이 열려있습니다.")
-        #     logging.error("{0} File Permission Error".format(time()))
+        if Result == "Success":
+            msg.setText("Success !")
+            msg.setInformativeText("Running Time : {0}".format(int(time()-start_time)))
+            logging.info("{0} Success to finish the analyzation".format(time()))
+        elif Result == "Error":
+            msg.setText("Error!\n컬럼명 일치 여부, 입력 누락, 컬럼 선택 등 기타 주의사항 확인")
+            msg.setInformativeText("ls123kr@naver.com 문의")
+            logging.error("{0} Etc Error".format(time()))
+        elif Result == "Permission":
+            msg.setText("Permission Error!\n생성하려는 파일과 동일한 이름의 파일이 열려있는지 확인")
+            logging.error("{0} File Permission Error".format(time()))
+        elif Result == 'sheet name':
+            msg.setText("Sheet name Error!\n집단 평균분석 또는 전체 평균분석 시 sheet이름 앞에 A 또는 B 집단 구분 필요")
+            logging.error("{0} Sheet name Error".format(time()))
         msg.exec_()
 
     def on_change(self):
@@ -418,16 +455,16 @@ class Ui_Main_frame(object):
             isselect = QtCore.Qt.Checked
             if self.book.xls is not None:
                 cursheet = self.sheets[idx]
-                if self.DumaPos_Combobox.count() == 0:
-                    self.DumaPos_Combobox.addItem('선택안함')
-                    self.Dumaseq_Combobox.addItem('선택안함')
+                if self.DumaPos_combobox.count() == 0:
+                    self.DumaPos_combobox.addItem('선택안함')
+                    self.Dumaseq_combobox.addItem('선택안함')
                     self.GenomeST_combobox.addItem('선택안함')
                     self.RepeatReG_combobox.addItem('선택안함')
                     self.ORF_combobox.addItem('선택안함')
                     self.seq_combobox.addItem('선택안함')
                     for col in cursheet.columns:
-                        self.DumaPos_Combobox.addItem(col)
-                        self.Dumaseq_Combobox.addItem(col)
+                        self.DumaPos_combobox.addItem(col)
+                        self.Dumaseq_combobox.addItem(col)
                         self.GenomeST_combobox.addItem(col)
                         self.RepeatReG_combobox.addItem(col)
                         self.ORF_combobox.addItem(col)
@@ -443,4 +480,3 @@ if __name__ == "__main__":
     ui.setupUi(Main_frame)
     Main_frame.show()
     sys.exit(app.exec_())
-
